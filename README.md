@@ -13,7 +13,7 @@ These contracts handle authentication, custody of funds, and base execution.
 | Contract              | Purpose |
 |-----------------------|---------|
 | **WalletManager.sol** | Creates, imports, and manages user wallets onchain. Links Farcaster IDs to addresses. |
-| **UserVault.sol**     | Per-user vault for custody of tokens and ETH. Supports deposits, withdrawals, and approvals. |
+| **UserVault.sol**     | Per-user vault for custody of tokens and ETH. Supports deposits, withdrawals, and approvals. | 0xa3aE01BE8b0Ec12a8FB4c72eF2f57A137e0fD000
 | **ActionExecutor.sol**| Central contract that executes whitelisted actions by delegating to modules. |
 | **PermitManager.sol** | Manages EIP-712 signature-based permissions for secure bot-triggered actions without private key exposure. |
 | **FarcasterRegistry.sol** | Maps Farcaster IDs ↔ Ethereum addresses ↔ UserVaults. |

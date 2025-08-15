@@ -1,0 +1,1 @@
+//Per-user vault for custody of tokens and ETH. Supports deposits, withdrawals, and approvals.

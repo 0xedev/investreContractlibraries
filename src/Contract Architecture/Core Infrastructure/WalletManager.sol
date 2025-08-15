@@ -1,0 +1,1 @@
+//	Creates, imports, and manages user wallets onchain. Links Farcaster IDs to addresses.

@@ -1,0 +1,1 @@
+//Manages EIP-712 signature-based permissions for secure bot-triggered actions without private key exposure.

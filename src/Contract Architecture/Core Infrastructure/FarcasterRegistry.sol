@@ -1,0 +1,1 @@
+//Maps Farcaster IDs ↔ Ethereum addresses ↔ UserVaults.

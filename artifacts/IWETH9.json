@@ -49,51 +49,29 @@
 		},
 		"gasEstimates": null,
 		"methodIdentifiers": {
-			"executeCall(address,uint256,bytes)": "9e5d4c49",
-			"owner()": "8da5cb5b"
+			"deposit()": "d0e30db0",
+			"withdraw(uint256)": "2e1a7d4d"
 		}
 	},
 	"abi": [
 		{
-			"inputs": [
-				{
-					"internalType": "address",
-					"name": "target",
-					"type": "address"
-				},
-				{
-					"internalType": "uint256",
-					"name": "value",
-					"type": "uint256"
-				},
-				{
-					"internalType": "bytes",
-					"name": "data",
-					"type": "bytes"
-				}
-			],
-			"name": "executeCall",
-			"outputs": [
-				{
-					"internalType": "bytes",
-					"name": "",
-					"type": "bytes"
-				}
-			],
-			"stateMutability": "nonpayable",
+			"inputs": [],
+			"name": "deposit",
+			"outputs": [],
+			"stateMutability": "payable",
 			"type": "function"
 		},
 		{
-			"inputs": [],
-			"name": "owner",
-			"outputs": [
+			"inputs": [
 				{
-					"internalType": "address",
+					"internalType": "uint256",
 					"name": "",
-					"type": "address"
+					"type": "uint256"
 				}
 			],
-			"stateMutability": "view",
+			"name": "withdraw",
+			"outputs": [],
+			"stateMutability": "nonpayable",
 			"type": "function"
 		}
 	]

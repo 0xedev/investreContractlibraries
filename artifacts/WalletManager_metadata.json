@@ -532,7 +532,8 @@
 			"enabled": true,
 			"runs": 200
 		},
-		"remappings": []
+		"remappings": [],
+		"viaIR": true
 	},
 	"sources": {
 		"@openzeppelin/contracts/access/Ownable.sol": {
@@ -576,11 +577,11 @@
 			]
 		},
 		"src/Contract Architecture/Core Infrastructure/WalletManager.sol": {
-			"keccak256": "0x65be71d63bbe1632c4cc318ced096d0e00771f90220b5f2c2a11a58a90761dd3",
+			"keccak256": "0x7d2998af0a2c7e87d8d25d3b7d15b4c211133005624f040324d20be4802106be",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://6cb7c9e107605fc889d8ded7c1fe75eaf7ac1c7e2f830fcc8b77e5adc79bcfd4",
-				"dweb:/ipfs/QmWYUrLeAdU4YmoM4Zf8Gn1n585hEm44KHJG347tNtdrA9"
+				"bzz-raw://be538323ab19a734e62570e636390bc703a7e53632ab71f873249b04d429255a",
+				"dweb:/ipfs/QmWSaQCnYxiFGKjaGUNyM3e7VpU2YPYyKTDbP4q5v9UfrL"
 			]
 		}
 	},

@@ -9,28 +9,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "target",
+						"name": "owner_",
 						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "value",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bytes",
-						"name": "data",
-						"type": "bytes"
 					}
 				],
-				"name": "executeCall",
-				"outputs": [
-					{
-						"internalType": "bytes",
-						"name": "",
-						"type": "bytes"
-					}
-				],
+				"name": "initialize",
+				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -61,7 +45,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"src/Contract Architecture/Core Infrastructure/ActionExecutor.sol": "IUserVault"
+			"src/Contract Architecture/Core Infrastructure/WalletManager.sol": "IUserVault"
 		},
 		"evmVersion": "cancun",
 		"libraries": {},
@@ -84,6 +68,14 @@
 				"dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a"
 			]
 		},
+		"@openzeppelin/contracts/proxy/Clones.sol": {
+			"keccak256": "0x7e918671c04972845975935ea13c9ce0be1228031ba0e929d0f1f68fd1f17214",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://3027ebaeef3e678ad9bae26f0556469878e992bf7dec94bede328a92be529419",
+				"dweb:/ipfs/Qmdu4RfMYv9Q7iHWuYfyUL6fZKc73nM4YWizNP8w1xay56"
+			]
+		},
 		"@openzeppelin/contracts/utils/Context.sol": {
 			"keccak256": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
 			"license": "MIT",
@@ -92,20 +84,28 @@
 				"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF"
 			]
 		},
-		"@openzeppelin/contracts/utils/cryptography/ECDSA.sol": {
-			"keccak256": "0x69f54c02b7d81d505910ec198c11ed4c6a728418a868b906b4a0cf29946fda84",
+		"@openzeppelin/contracts/utils/Create2.sol": {
+			"keccak256": "0xbb7e8401583d26268ea9103013bcdcd90866a7718bd91105ebd21c9bf11f4f06",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://8e25e4bdb7ae1f21d23bfee996e22736fc0ab44cfabedac82a757b1edc5623b9",
-				"dweb:/ipfs/QmQdWQvB6JCP9ZMbzi8EvQ1PTETqkcTWrbcVurS7DKpa5n"
+				"bzz-raw://866a11ad89c93ee918078f7a46ae31e17d89216ce64603f0d34be7ed0a5c520e",
+				"dweb:/ipfs/QmW3ckLEJg2v2NzuVLNJFmRuerGSipw6Dzg6ntbmqbAGoC"
 			]
 		},
-		"src/Contract Architecture/Core Infrastructure/ActionExecutor.sol": {
-			"keccak256": "0x5389e28c753b7b5039552cd9926b200c03d5f907461dcf52da9ce5212949afb1",
+		"@openzeppelin/contracts/utils/Errors.sol": {
+			"keccak256": "0x6afa713bfd42cf0f7656efa91201007ac465e42049d7de1d50753a373648c123",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://d82ccdc28e0d73b7822c2b704ed381feb44b5fa49780f52d382af21a4e9ccccc",
-				"dweb:/ipfs/QmdtqK65Z7rxWdtfhg8PsoK4pXT1rEgwnVT7uafHMdkQr2"
+				"bzz-raw://ba1d02f4847670a1b83dec9f7d37f0b0418d6043447b69f3a29a5f9efc547fcf",
+				"dweb:/ipfs/QmQ7iH2keLNUKgq2xSWcRmuBE5eZ3F5whYAkAGzCNNoEWB"
+			]
+		},
+		"src/Contract Architecture/Core Infrastructure/WalletManager.sol": {
+			"keccak256": "0x7d2998af0a2c7e87d8d25d3b7d15b4c211133005624f040324d20be4802106be",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://be538323ab19a734e62570e636390bc703a7e53632ab71f873249b04d429255a",
+				"dweb:/ipfs/QmWSaQCnYxiFGKjaGUNyM3e7VpU2YPYyKTDbP4q5v9UfrL"
 			]
 		}
 	},

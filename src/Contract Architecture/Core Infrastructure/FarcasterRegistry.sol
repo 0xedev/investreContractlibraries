@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
  * @title FarcasterRegistry
  * @notice Canonical registry mapping Farcaster IDs (FIDs) <-> Owners, with optional vault association.
  *         Supports meta-transactions via EIP-712 signatures (link, unlink, transfer).
- *
+ * CA: 0x766186d46a9c93712eac4Bf37000f732A53D763E
  *  Guarantees:
  *   - A FID maps to at most one owner.
  *   - An owner can link at most one FID (configurable via code change if multi-FID per owner is needed).

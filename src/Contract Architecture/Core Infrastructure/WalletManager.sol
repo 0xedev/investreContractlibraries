@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
  * @title WalletManager
  * @notice Creates per-user vaults using EIP-1167 minimal proxies and links Farcaster IDs to owners.
  *         Keeps bijective relations: owner -> vault, FID -> owner. Each owner has at most one vault.
- *
+ *CA:0x4385b0B61f182573E8ffa594dec3707fa962d02a
  * @dev    Expects a deployed UserVault implementation that has an initialize(address owner) function.
  *         Uses OpenZeppelin Ownable & Clones. Safe for use as a core infra piece.
  */

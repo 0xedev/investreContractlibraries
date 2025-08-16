@@ -5,7 +5,8 @@ pragma solidity ^0.8.20;
  * @title PermitManager
  * @notice Manages EIP-712 signature-based permissions for secure offchain-triggered actions.
  *         Users can sign typed data authorizing the ActionExecutor (or other contracts) to perform specific actions.
- */
+ *CA:0x3280DA07A699B0061dB5e0109c72D05fD72aC991
+ */ 
 contract PermitManager {
     /// @notice Mapping of used nonces for replay protection: user => nonce => used
     mapping(address => mapping(uint256 => bool)) public usedNonces;

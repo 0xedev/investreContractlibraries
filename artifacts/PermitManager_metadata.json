@@ -191,11 +191,11 @@
 	},
 	"sources": {
 		"src/Contract Architecture/Core Infrastructure/PermitManager.sol": {
-			"keccak256": "0xc5cd144ab00125a909543c479522b15c6d2441f235cc97ac2fd957ea64682f5f",
+			"keccak256": "0xd9bc6b4cc6a819b55cddd13a8785e301ae100fcddfee92ce07a60805add417f9",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://3ebaf4da7ffdb444a69a1870556d2766e970d8f75ea0aa3d3c6923b5e46237c9",
-				"dweb:/ipfs/QmSwLeuL4N9t5ZwEJUN2YSjqUYJZBAa2pU3zcaU21oRrCY"
+				"bzz-raw://7ba4dbf2c1b925305c99789230a537040e22e12de4d7d3efc13e37560d82f0de",
+				"dweb:/ipfs/QmcsnvCN7Pt79RL4VDHzpUcBv325qaKBmvgaEMk4wN6fRm"
 			]
 		}
 	},

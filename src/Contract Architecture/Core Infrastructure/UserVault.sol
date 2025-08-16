@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
  * @title UserVault (cloneable)
  * @notice Minimal, secure per-user vault meant to be cloned via EIP-1167 (WalletManager).
  *         Initialize once via `initialize(owner_)`.
- *
+ * CA: 0xa3aE01BE8b0Ec12a8FB4c72eF2f57A137e0fD000
  * Security notes:
  *  - This contract is intentionally small and avoids full OpenZeppelin upgradeable patterns
  *    to keep clone bytecode minimal. It implements a simple initializer guard.

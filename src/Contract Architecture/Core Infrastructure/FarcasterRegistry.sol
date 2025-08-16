@@ -18,8 +18,8 @@ pragma solidity ^0.8.24;
  *   - setProofVerifier() lets an external verifier contract authorize linking by calling linkWithProof.
  */
 
-import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ECDSA} from "lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 interface IFarcasterProofVerifier {
     function verifyLink(address owner, uint256 fid, bytes calldata proof) external view returns (bool);
@@ -83,7 +83,7 @@ contract FarcasterRegistry is Ownable {
     bytes32 public constant TRANSFER_TYPEHASH =
         keccak256("Transfer(address owner,uint256 fid,address newOwner,address newVault,uint256 nonce,uint256 deadline)");
 
-    constructor() Ownable() {
+    constructor() Ownable(msg.sender) {
         uint256 chainId;
         assembly {
             chainId := chainid()

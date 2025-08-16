@@ -1,0 +1,203 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "target",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "nonce",
+						"type": "uint256"
+					}
+				],
+				"name": "PermitUsed",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "DOMAIN_SEPARATOR",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "PERMIT_TYPEHASH",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "target",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					},
+					{
+						"internalType": "uint256",
+						"name": "nonce",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "deadline",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "v",
+						"type": "uint8"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "r",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "s",
+						"type": "bytes32"
+					}
+				],
+				"name": "usePermit",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "usedNonces",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"usePermit(address,address,bytes,uint256,uint256,uint8,bytes32,bytes32)": {
+					"params": {
+						"data": "Arbitrary call data authorized by the user",
+						"deadline": "Expiry timestamp for the permit",
+						"nonce": "The nonce to prevent replay attacks",
+						"r": "Signature r",
+						"s": "Signature s",
+						"target": "The contract authorized to be called",
+						"user": "The signer of the permit",
+						"v": "Signature v"
+					}
+				}
+			},
+			"title": "PermitManager",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"DOMAIN_SEPARATOR()": {
+					"notice": "Domain separator for EIP-712"
+				},
+				"PERMIT_TYPEHASH()": {
+					"notice": "Typehash for the Permit struct"
+				},
+				"usePermit(address,address,bytes,uint256,uint256,uint8,bytes32,bytes32)": {
+					"notice": "Validates an EIP-712 permit signature and marks it as used."
+				},
+				"usedNonces(address,uint256)": {
+					"notice": "Mapping of used nonces for replay protection: user => nonce => used"
+				}
+			},
+			"notice": "Manages EIP-712 signature-based permissions for secure offchain-triggered actions.         Users can sign typed data authorizing the ActionExecutor (or other contracts) to perform specific actions.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"src/Contract Architecture/Core Infrastructure/PermitManager.sol": "PermitManager"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": [],
+		"viaIR": true
+	},
+	"sources": {
+		"src/Contract Architecture/Core Infrastructure/PermitManager.sol": {
+			"keccak256": "0xc5cd144ab00125a909543c479522b15c6d2441f235cc97ac2fd957ea64682f5f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://3ebaf4da7ffdb444a69a1870556d2766e970d8f75ea0aa3d3c6923b5e46237c9",
+				"dweb:/ipfs/QmSwLeuL4N9t5ZwEJUN2YSjqUYJZBAa2pU3zcaU21oRrCY"
+			]
+		}
+	},
+	"version": 1
+}

@@ -119,11 +119,11 @@
 			]
 		},
 		"src/Contract Architecture/Trading & Portfolio Management/SwapModule.sol": {
-			"keccak256": "0xf4b22d148614b1b95f0b572b505fb7ad71c0315b9703ea48ae42da953e2dea6f",
+			"keccak256": "0x18d988fc061a7254fbfe572fd11192a677d9d8d8fdee0756f6debf5f9c27aa14",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://30511bc505af2be3d96887be6c0d3cf5a55e21ab12af0b0c62109d3df35a89d5",
-				"dweb:/ipfs/QmeBkNceLjHurrQxAUn43A3YuadUf2JCpAKdN7d6UYUzZx"
+				"bzz-raw://12a17ece331646c757cf5aafc5c7cbb38b36dba65fa01c33c0a037503f953be5",
+				"dweb:/ipfs/QmahbJwksQQRHq9PnbNiA7CzFQ2jb7BTNYVupUVkzv2xGH"
 			]
 		}
 	},

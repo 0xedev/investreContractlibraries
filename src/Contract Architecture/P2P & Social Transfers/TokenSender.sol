@@ -47,7 +47,7 @@ contract TokenSender is Ownable {
     event BatchTokenSent(address indexed vault, address indexed token, uint256 recipients);
     event BatchEthSent(address indexed vault, uint256 recipients);
 
-    constructor(address _registry) Ownable() {
+    constructor(address _registry) Ownable(msg.sender) {
         if (_registry != address(0)) {
             registry = IFarcasterRegistry(_registry);
             emit RegistryUpdated(_registry);

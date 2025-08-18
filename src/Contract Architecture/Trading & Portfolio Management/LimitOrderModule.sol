@@ -86,7 +86,7 @@ contract LimitOrderModule is Ownable, ReentrancyGuard {
     event OrderCancelled(uint256 indexed id, address indexed vault);
     event OrderExecuted(uint256 indexed id, address indexed vault, uint256 amountOut);
 
-    constructor(address _oracle, address _router) {
+    constructor(address _oracle, address _router) Ownable(msg.sender) {
         require(_oracle != address(0) && _router != address(0), "ZeroAddr");
         oracle = IOracleManager(_oracle);
         router = IUniswapV3Router(_router);
@@ -178,8 +178,8 @@ contract LimitOrderModule is Ownable, ReentrancyGuard {
 
         // Pull funds from vault into this module and approve router
         IERC20(o.tokenIn).safeTransferFrom(o.vault, address(this), o.amountIn);
-        IERC20(o.tokenIn).safeApprove(address(router), 0);
-        IERC20(o.tokenIn).safeApprove(address(router), o.amountIn);
+        IERC20(o.tokenIn).approve(address(router), 0);
+        IERC20(o.tokenIn).approve(address(router), o.amountIn);
 
         // Swap, recipient is the vault
         amountOut = router.exactInputSingle(

@@ -140,11 +140,11 @@
 			]
 		},
 		"src/Contract Architecture/Trading & Portfolio Management/LimitOrderModule.sol": {
-			"keccak256": "0xec1a8acca14332f7a190555cfee120ecb75b23e1e6feb1dca07a34a40d04d9df",
+			"keccak256": "0x1eb1bd94f9c634de08ccadac9d1b7e6cc13986fbc37cd98ea48f7d2b2f09e14d",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://14edd6a5c1fe7d71b4d1a1bfeeb905a6470647746139dc96ed22e97b00f1dd2a",
-				"dweb:/ipfs/QmfBX7eHJgYWLX36pZbNw8XBmMqcLoA7Z9vW6B6GdSNhvT"
+				"bzz-raw://dd5a8a62000abbae70708a05a67ef0ed979ba2fa370948fcfe1ea644d3fabc78",
+				"dweb:/ipfs/QmUDxM1UqBR6U9i8hFB4SbDHgKFexdKD14VTEuATDFiReo"
 			]
 		}
 	},

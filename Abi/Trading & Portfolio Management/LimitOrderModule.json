@@ -1,0 +1,31 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "base",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "quote",
+				"type": "address"
+			}
+		],
+		"name": "getPrice1e18",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "price1e18",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "updatedAt",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

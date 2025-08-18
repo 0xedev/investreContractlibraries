@@ -20,10 +20,10 @@ pragma solidity ^0.8.24;
  *  - Vault must approve this module to spend `base` (or integrate Permit2).
  */
 
-import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IOracleManager2 {
     function getPrice1e18(address base, address quote) external view returns (uint256 price1e18, uint256 updatedAt);
@@ -83,7 +83,7 @@ contract TPSLModule is Ownable, ReentrancyGuard {
     event Cleared(address indexed vault, address indexed base, address indexed quote);
     event Executed(address indexed vault, address indexed base, address indexed quote, uint256 sold, uint256 received, bool tpTriggered, bool slTriggered);
 
-    constructor(address _oracle, address _router) {
+    constructor(address _oracle, address _router) Ownable(msg.sender) {
         require(_oracle != address(0) && _router != address(0), "ZeroAddr");
         oracle = IOracleManager2(_oracle);
         router = IUniswapV3Router2(_router);
@@ -168,8 +168,8 @@ contract TPSLModule is Ownable, ReentrancyGuard {
 
         // Pull base from vault, approve router
         IERC20(base).safeTransferFrom(vault, address(this), amountSold);
-        IERC20(base).safeApprove(address(router), 0);
-        IERC20(base).safeApprove(address(router), amountSold);
+        IERC20(base).approve(address(router), 0);
+        IERC20(base).approve(address(router), amountSold);
 
         // Swap to quote, recipient is vault
         amountReceived = router.exactInputSingle(

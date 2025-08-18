@@ -15,8 +15,8 @@ pragma solidity ^0.8.24;
  *  - Native token uses the sentinel address: address(0).
  */
 
-import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
@@ -51,6 +51,8 @@ contract PortfolioViewer is Ownable {
     mapping(address => FeedConfig) public feeds;
 
     event FeedSet(address indexed token, address indexed feed, uint48 heartbeat);
+
+    constructor () Ownable(msg.sender){}
 
     // ========= Admin: register price feeds =========
 

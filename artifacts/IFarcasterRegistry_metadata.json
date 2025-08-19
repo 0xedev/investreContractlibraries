@@ -57,7 +57,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"src/Contract Architecture/P2P & Social Transfers/TokenSender.sol": "IFarcasterRegistry"
+			"src/Contract Architecture/P2P & Social Transfers/BatchSender.sol": "IFarcasterRegistry"
 		},
 		"evmVersion": "cancun",
 		"libraries": {},
@@ -136,12 +136,12 @@
 				"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u"
 			]
 		},
-		"src/Contract Architecture/P2P & Social Transfers/TokenSender.sol": {
-			"keccak256": "0xb61c7be3c7c9cfe7a05c5a42b9e9554ebe85c6212b00abfb2ebc0b24f53cde37",
+		"src/Contract Architecture/P2P & Social Transfers/BatchSender.sol": {
+			"keccak256": "0xbd7a16b0d0d505f407abad981c83c2955772172a35ab3a2d0c279603b8264fea",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://c77c39d306820de98bd3ba452054e31c848bb6c393c331610039812bed90ee58",
-				"dweb:/ipfs/QmUJfhNrfQDCw8tM5A8p48v3wBV1ztt3pHB35bTpJeZBXP"
+				"bzz-raw://255503100a34c70e71012ac09b6572e5be8bd004c9504c37117c8fff40a2e611",
+				"dweb:/ipfs/QmQuQYagKc6bvn8eYBMyZWsuUnNxWrf6kavbGbvR1YLE2C"
 			]
 		}
 	},

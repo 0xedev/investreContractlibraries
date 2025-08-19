@@ -17,8 +17,8 @@ pragma solidity ^0.8.24;
  */
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IFarcasterRegistry {
     function getVaultByFid(uint256 fid) external view returns (address);
@@ -36,7 +36,7 @@ contract BatchSender is Ownable {
     event BatchTokenSent(address indexed vault, address indexed token, uint256 recipients, uint256 total);
     event BatchEthSent(address indexed vault, uint256 recipients, uint256 total);
 
-    constructor(address _registry) Ownable() {
+    constructor(address _registry) Ownable(msg.sender) {
         if (_registry != address(0)) {
             registry = IFarcasterRegistry(_registry);
             emit RegistryUpdated(_registry);

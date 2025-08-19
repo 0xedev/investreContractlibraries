@@ -1,0 +1,97 @@
+{
+	"deploy": {
+		"VM:-": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"main:1": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"ropsten:3": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"rinkeby:4": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"kovan:42": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"goerli:5": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"Custom": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		}
+	},
+	"data": {
+		"bytecode": {
+			"functionDebugData": {},
+			"generatedSources": [],
+			"linkReferences": {},
+			"object": "6080806040523460175760399081601c823930815050f35b5f80fdfe5f80fdfea2646970667358221220895378027733d005cb56e159811e5c90a17ff1449fb9114fbafa80525ab49b0564736f6c63430008180033",
+			"opcodes": "PUSH1 0x80 DUP1 PUSH1 0x40 MSTORE CALLVALUE PUSH1 0x17 JUMPI PUSH1 0x39 SWAP1 DUP2 PUSH1 0x1C DUP3 CODECOPY ADDRESS DUP2 POP POP RETURN JUMPDEST PUSH0 DUP1 REVERT INVALID PUSH0 DUP1 REVERT INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 DUP10 MSTORE8 PUSH25 0x27733D005CB56E159811E5C90A17FF1449FB9114FBAFA8052 GAS 0xB4 SWAP12 SDIV PUSH5 0x736F6C6343 STOP ADDMOD XOR STOP CALLER ",
+			"sourceMap": "4441:7470:0:-:0;;;;;;;;;;;;;;;;;;;;;"
+		},
+		"deployedBytecode": {
+			"functionDebugData": {},
+			"generatedSources": [],
+			"immutableReferences": {},
+			"linkReferences": {},
+			"object": "5f80fdfea2646970667358221220895378027733d005cb56e159811e5c90a17ff1449fb9114fbafa80525ab49b0564736f6c63430008180033",
+			"opcodes": "PUSH0 DUP1 REVERT INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 DUP10 MSTORE8 PUSH25 0x27733D005CB56E159811E5C90A17FF1449FB9114FBAFA8052 GAS 0xB4 SWAP12 SDIV PUSH5 0x736F6C6343 STOP ADDMOD XOR STOP CALLER ",
+			"sourceMap": "4441:7470:0:-:0;;"
+		},
+		"gasEstimates": {
+			"creation": {
+				"codeDepositCost": "11400",
+				"executionCost": "infinite",
+				"totalCost": "infinite"
+			},
+			"internal": {
+				"_throwError(enum ECDSA.RecoverError,bytes32)": "infinite",
+				"recover(bytes32,bytes memory)": "infinite",
+				"recover(bytes32,bytes32,bytes32)": "infinite",
+				"recover(bytes32,uint8,bytes32,bytes32)": "infinite",
+				"tryRecover(bytes32,bytes memory)": "infinite",
+				"tryRecover(bytes32,bytes32,bytes32)": "infinite",
+				"tryRecover(bytes32,uint8,bytes32,bytes32)": "infinite"
+			}
+		},
+		"methodIdentifiers": {}
+	},
+	"abi": [
+		{
+			"inputs": [],
+			"name": "ECDSAInvalidSignature",
+			"type": "error"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "length",
+					"type": "uint256"
+				}
+			],
+			"name": "ECDSAInvalidSignatureLength",
+			"type": "error"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "s",
+					"type": "bytes32"
+				}
+			],
+			"name": "ECDSAInvalidSignatureS",
+			"type": "error"
+		}
+	]
+}

@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.26+commit.8a97fa7a"
+		"version": "0.8.24+commit.e11b9ed9"
 	},
 	"language": "Solidity",
 	"output": {
@@ -720,7 +720,7 @@
 		"compilationTarget": {
 			"src/Contract Architecture/Core Infrastructure/FarcasterRegistry.sol": "FarcasterRegistry"
 		},
-		"evmVersion": "cancun",
+		"evmVersion": "shanghai",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -758,11 +758,11 @@
 			]
 		},
 		"src/Contract Architecture/Core Infrastructure/FarcasterRegistry.sol": {
-			"keccak256": "0xf73d12fbebeceb570b354c47fd7c37bff8708f1ea129e080b795dfe0e5011456",
+			"keccak256": "0x6663193190c1179f67880c62c7a4116857f8f909939c5f0b3325318d8f5f460a",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://83c1240e624ff9074964719645aef2d75079bb9e832f6bc01a3f1016a7adc4ab",
-				"dweb:/ipfs/QmUyZVE9gH9B8pQR4ZRfJS6QNhd6oRsen8VewxKbtsDV9z"
+				"bzz-raw://fd9c25bfbb03df3d033cecb96c3c6a8fe9e484e054b247f01f489d9aafc80c86",
+				"dweb:/ipfs/QmV8y6oDRyqRGJnCq8zyjr9T2srkdEf7sRoM1HMz9y8exU"
 			]
 		}
 	},

@@ -1,0 +1,124 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "bool",
+						"name": "eligible",
+						"type": "bool"
+					}
+				],
+				"name": "EligibilitySet",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					}
+				],
+				"name": "checkEligibility",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "isEligible",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "eligible",
+						"type": "bool"
+					}
+				],
+				"name": "setEligibility",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"title": "EligibilityVerifier",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"notice": "Minimal contract to enforce per-user eligibility rules for modules.         Can be extended with token/NFT gating or external verifiers.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"src/Contract Architecture/P2P & Social Transfers/EligibilityVerifier.sol": "EligibilityVerifier"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": [],
+		"viaIR": true
+	},
+	"sources": {
+		"src/Contract Architecture/P2P & Social Transfers/EligibilityVerifier.sol": {
+			"keccak256": "0x87e1f6d583d6242a6883b7568f25eb8fe56dcf7ade176c5df55984cd01d28fb3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://acd0e664678f559b059703cbd2e498ce375ba41d2efb46312177e7326defede9",
+				"dweb:/ipfs/QmY3T9gUDwTz68m1ydn5Uau58QX71YUGa1gn774AJEnGFn"
+			]
+		}
+	},
+	"version": 1
+}

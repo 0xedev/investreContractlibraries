@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.26+commit.8a97fa7a"
+		"version": "0.8.24+commit.e11b9ed9"
 	},
 	"language": "Solidity",
 	"output": {
@@ -545,7 +545,7 @@
 		"compilationTarget": {
 			"src/Contract Architecture/Core Infrastructure/UserVault.sol": "UserVault"
 		},
-		"evmVersion": "cancun",
+		"evmVersion": "shanghai",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -554,7 +554,8 @@
 			"enabled": true,
 			"runs": 200
 		},
-		"remappings": []
+		"remappings": [],
+		"viaIR": true
 	},
 	"sources": {
 		"@openzeppelin/contracts/interfaces/IERC1363.sol": {
@@ -606,11 +607,11 @@
 			]
 		},
 		"src/Contract Architecture/Core Infrastructure/UserVault.sol": {
-			"keccak256": "0xcca8eb5db2ff20a25140cac4fd7f47068574362da8d74b1de5dc65fbede3bc4a",
+			"keccak256": "0xcd27558e52df4e6e460bfc61b50a17b3deb0e8558eb314901a110f688c76fdfc",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://7d075e1cf7599f8f0d07f10886c10bbd84d265cbdd79d21b2f21b10f8a2769f7",
-				"dweb:/ipfs/QmPHFmSn4o1P2kt52GGRPaiDNv3wtwF4t2qHsVKdHVUhVx"
+				"bzz-raw://f2ee578bdce85d5d75058275b8d845815b9f1520c0eb1b9bd063073def98435e",
+				"dweb:/ipfs/QmNUhYt2xYu47LXRr4xgZu1AdEad6inx17rXr3GowDASUy"
 			]
 		}
 	},

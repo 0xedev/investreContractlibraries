@@ -19,10 +19,10 @@ pragma solidity ^0.8.24;
  *  - Eligibility (optional) is enforced by `IEligibilityVerifier`.
  */
 
-import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IEligibilityVerifier {
     /// @notice Return true if `user` is eligible to enter the given giveaway.
@@ -93,7 +93,7 @@ contract GiveawayManager is Ownable, ReentrancyGuard {
     event Claimed(uint256 indexed id, address indexed winner, uint256 amount);
     event RemainderSwept(uint256 indexed id, address indexed to, uint256 amount);
 
-    constructor(address _randomnessProvider, address _eligibilityVerifier) Ownable() {
+    constructor(address _randomnessProvider, address _eligibilityVerifier) Ownable(msg.sender) {
         if (_randomnessProvider != address(0)) {
             randomnessProvider = IRandomnessProvider(_randomnessProvider);
             emit RandomnessProviderUpdated(_randomnessProvider);
@@ -184,3 +184,4 @@ contract GiveawayManager is Ownable, ReentrancyGuard {
     }
 
     // --- Cancellation (before draw)
+}

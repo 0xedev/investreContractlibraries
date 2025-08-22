@@ -213,7 +213,7 @@ contract RaindropEscrow is ReentrancyGuard, Ownable(msg.sender) {
             token.safeTransfer(raindrop.host, remainingAmount);
         }
 
-        emit RaindropExecuted(raindropId, raindrop.participantCount, amountPerParticipant, totalToDistribute);
+        emit RaindropExecuted(raindropId, raindrop.participantCount, amountPerParticipant, distributed);
     }
 
     /**

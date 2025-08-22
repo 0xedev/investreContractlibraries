@@ -1,61 +1,325 @@
 [
-	{
-		"inputs": [],
-		"name": "decimals",
-		"outputs": [
-			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "description",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "latestRoundData",
-		"outputs": [
-			{
-				"internalType": "uint80",
-				"name": "roundId",
-				"type": "uint80"
-			},
-			{
-				"internalType": "int256",
-				"name": "answer",
-				"type": "int256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "startedAt",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "updatedAt",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint80",
-				"name": "answeredInRound",
-				"type": "uint80"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]
+		{
+			"inputs": [],
+			"stateMutability": "nonpayable",
+			"type": "constructor"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "owner",
+					"type": "address"
+				}
+			],
+			"name": "OwnableInvalidOwner",
+			"type": "error"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "account",
+					"type": "address"
+				}
+			],
+			"name": "OwnableUnauthorizedAccount",
+			"type": "error"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "token",
+					"type": "address"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "feed",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint48",
+					"name": "heartbeat",
+					"type": "uint48"
+				}
+			],
+			"name": "FeedSet",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "previousOwner",
+					"type": "address"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "newOwner",
+					"type": "address"
+				}
+			],
+			"name": "OwnershipTransferred",
+			"type": "event"
+		},
+		{
+			"inputs": [],
+			"name": "NATIVE",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "vault",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "token",
+					"type": "address"
+				}
+			],
+			"name": "balanceOf",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "bal",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint8",
+					"name": "dec",
+					"type": "uint8"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "vault",
+					"type": "address"
+				},
+				{
+					"internalType": "address[]",
+					"name": "tokens",
+					"type": "address[]"
+				}
+			],
+			"name": "balancesOf",
+			"outputs": [
+				{
+					"internalType": "uint256[]",
+					"name": "bals",
+					"type": "uint256[]"
+				},
+				{
+					"internalType": "uint8[]",
+					"name": "decs",
+					"type": "uint8[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"name": "feeds",
+			"outputs": [
+				{
+					"internalType": "contract AggregatorV3Interface",
+					"name": "feed",
+					"type": "address"
+				},
+				{
+					"internalType": "uint48",
+					"name": "heartbeat",
+					"type": "uint48"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "owner",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "vault",
+					"type": "address"
+				},
+				{
+					"internalType": "address[]",
+					"name": "tokens",
+					"type": "address[]"
+				}
+			],
+			"name": "portfolioOf",
+			"outputs": [
+				{
+					"internalType": "uint256[]",
+					"name": "bals",
+					"type": "uint256[]"
+				},
+				{
+					"internalType": "uint256[]",
+					"name": "usdValues",
+					"type": "uint256[]"
+				},
+				{
+					"internalType": "uint256",
+					"name": "totalUsd1e18",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "token",
+					"type": "address"
+				}
+			],
+			"name": "priceUsd1e18",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "p",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "renounceOwnership",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "token",
+					"type": "address"
+				},
+				{
+					"internalType": "contract AggregatorV3Interface",
+					"name": "feed",
+					"type": "address"
+				},
+				{
+					"internalType": "uint48",
+					"name": "heartbeat",
+					"type": "uint48"
+				}
+			],
+			"name": "setFeed",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address[]",
+					"name": "vaults",
+					"type": "address[]"
+				},
+				{
+					"internalType": "address[]",
+					"name": "tokens",
+					"type": "address[]"
+				}
+			],
+			"name": "totalValueUsd",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "totalUsd1e18",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "newOwner",
+					"type": "address"
+				}
+			],
+			"name": "transferOwnership",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "token",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "balance",
+					"type": "uint256"
+				}
+			],
+			"name": "valueUsd1e18",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		}
+	]

@@ -696,11 +696,11 @@
 			]
 		},
 		"src/Contract Architecture/Core Infrastructure/RaindropEscrow.sol": {
-			"keccak256": "0x2771e9014b132d483d4b5cb1d6ab449b76a6922cba0bb3ab6814959218deda9d",
+			"keccak256": "0x9558502f2926e7454ce399e72ded9efcf0fee5864fdb421829a3ccf55ab92dd7",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://5bf9a4ebaad69fe85a4c3120ce12f4b259f8650a7d42cc6b4902c858b476cdcc",
-				"dweb:/ipfs/QmUto7WcQ1fUcH1bQu8qtfE2wz7si8NweiVrNd6KKLEriu"
+				"bzz-raw://ae28a7977c9b848054e5fc5c4407c72d43345ceb224ece90ebb1acf4ad9547b7",
+				"dweb:/ipfs/QmcGJoYepp1UXN5PA7XVojAD9NLtfnAoRz86KhVYYRmVDB"
 			]
 		}
 	},

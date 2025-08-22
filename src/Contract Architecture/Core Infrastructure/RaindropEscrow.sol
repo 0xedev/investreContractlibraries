@@ -181,19 +181,21 @@ contract RaindropEscrow is ReentrancyGuard, Ownable(msg.sender) {
         require(!raindrop.cancelled, "Raindrop cancelled");
         require(block.timestamp >= raindrop.scheduledTime, "Too early to execute");
         require(raindrop.participantCount > 0, "No participants");
+        require(feeRecipient != address(0) || platformFeeBps ==0, "Fee recipient system not set");
 
-        // Mark as executed first to prevent reentrancy
-        raindrop.executed = true;
+        IERC20 token = IERC20(raindrop.token);
+       // Calculate platform fee
 
-        
-        // Calculate platform fee
-       uint256 platformFee = (raindrop.totalAmount * platformFeeBps) / 10000;
-       uint256 totalToDistribute = raindrop.totalAmount - platformFee;
+         uint256 platformFee = (raindrop.totalAmount * platformFeeBps) / 10000;
+         require(platformFee <= raindrop.totalAmount, "Fee exceeds total");
+         uint256 totalToDistribute = raindrop.totalAmount - platformFee;
        uint256 amountPerParticipant = totalToDistribute / raindrop.participantCount;
        uint256 distributed = amountPerParticipant * raindrop.participantCount;
        uint256 remainingAmount = totalToDistribute - distributed;
+         
+        // Mark as executed first to prevent reentrancy
+        raindrop.executed = true;
 
-        IERC20 token = IERC20(raindrop.token);
 
         // Batch transfer to all participants
         for (uint256 i = 0; i < raindrop.participantCount; i++) {

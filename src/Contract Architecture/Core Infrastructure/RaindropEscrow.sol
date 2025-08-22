@@ -158,7 +158,9 @@ contract RaindropEscrow is ReentrancyGuard, Ownable(msg.sender) {
 
         // Validate minimum amount per participant
         if (raindrop.participantCount > 0) {
-            uint256 amountPerParticipant = raindrop.totalAmount / raindrop.participantCount;
+            uint256 fee =(raindrop.totalAmount * platformFeeBps) /10000;
+            uint256 distributable = raindrop.totalAmount - fee;
+            uint256 amountPerParticipant = distributable / raindrop.participantCount;
             require(amountPerParticipant >= MIN_AMOUNT_PER_PARTICIPANT, 
                    "Amount per participant too small");
         }

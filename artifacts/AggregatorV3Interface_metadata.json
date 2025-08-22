@@ -7,32 +7,6 @@
 		"abi": [
 			{
 				"inputs": [],
-				"name": "decimals",
-				"outputs": [
-					{
-						"internalType": "uint8",
-						"name": "",
-						"type": "uint8"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "description",
-				"outputs": [
-					{
-						"internalType": "string",
-						"name": "",
-						"type": "string"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
 				"name": "latestRoundData",
 				"outputs": [
 					{
@@ -78,7 +52,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"src/Contract Architecture/Trading & Portfolio Management/PortfolioViewer.sol": "AggregatorV3Interface"
+			"src/Contract Architecture/Governance & Configuration/OracleAdapter.sol": "AggregatorV3Interface"
 		},
 		"evmVersion": "cancun",
 		"libraries": {},
@@ -93,36 +67,12 @@
 		"viaIR": true
 	},
 	"sources": {
-		"@openzeppelin/contracts/access/Ownable.sol": {
-			"keccak256": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+		"src/Contract Architecture/Governance & Configuration/OracleAdapter.sol": {
+			"keccak256": "0x9cc53f4afcb45683f0254e67aa162b6b4ac5c4a844150f3c9074039c3012ebd7",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://8ed324d3920bb545059d66ab97d43e43ee85fd3bd52e03e401f020afb0b120f6",
-				"dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a"
-			]
-		},
-		"@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-			"keccak256": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://5282825a626cfe924e504274b864a652b0023591fa66f06a067b25b51ba9b303",
-				"dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV"
-			]
-		},
-		"@openzeppelin/contracts/utils/Context.sol": {
-			"keccak256": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://6a708e8a5bdb1011c2c381c9a5cfd8a9a956d7d0a9dc1bd8bcdaf52f76ef2f12",
-				"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF"
-			]
-		},
-		"src/Contract Architecture/Trading & Portfolio Management/PortfolioViewer.sol": {
-			"keccak256": "0xc407103f21338a82c9722d38fdc33d61a5135fc1282937e325acb06adc763b96",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://f39606c7c59dfa669868bb75cf1ab8e719ee3ebe75d6e05aa4f7fe1704bf71d6",
-				"dweb:/ipfs/QmTQ4yKoJc2xHQehwFYCGMpb489U7uw4tvnqVPYGAQmZUj"
+				"bzz-raw://f1d3c7c39e783a8bed17993e118c032f69f629aed15b4dcbbe13efbe55e042b6",
+				"dweb:/ipfs/QmXjEiiKfF6ETkA96NuPx6fqXXPG25dPkPWpHX3ogzF46S"
 			]
 		}
 	},

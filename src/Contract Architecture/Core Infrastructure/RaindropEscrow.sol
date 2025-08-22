@@ -92,15 +92,23 @@ contract RaindropEscrow is ReentrancyGuard, Ownable(msg.sender) {
         require(totalAmount > 0, "Amount must be greater than 0");
         require(scheduledTime > block.timestamp, "Scheduled time must be in future");
 
+        //validate balance
+        IERC20 erc20 =IERC20(token);
+        uint256 balBefore = erc20.balanceOf(address(this));
+
         // Transfer tokens to escrow
-        IERC20(token).safeTransferFrom(msg.sender, address(this), totalAmount);
+        erc20.safeTransferFrom(msg.sender, address(this), totalAmount);
+        uint256 balAfter = erc20.balanceOf(address(this));
+        uint256 received = balAfter - balBefore;
+
+        require (received > 0, "Token transfer failed");
 
         // Create raindrop struct
         Raindrop storage newRaindrop = raindrops[raindropId];
         newRaindrop.raindropId = raindropId;
         newRaindrop.host = msg.sender;
         newRaindrop.token = token;
-        newRaindrop.totalAmount = totalAmount;
+        newRaindrop.totalAmount = received;
         newRaindrop.scheduledTime = scheduledTime;
         newRaindrop.executed = false;
         newRaindrop.cancelled = false;
@@ -108,7 +116,7 @@ contract RaindropEscrow is ReentrancyGuard, Ownable(msg.sender) {
 
         raindropExists[raindropId] = true;
 
-        emit RaindropCreated(raindropId, msg.sender, token, totalAmount, scheduledTime);
+        emit RaindropCreated(raindropId, msg.sender, token, received, scheduledTime);
     }
 
     /**

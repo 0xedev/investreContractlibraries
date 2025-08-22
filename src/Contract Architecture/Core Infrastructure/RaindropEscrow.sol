@@ -175,8 +175,6 @@ contract RaindropEscrow is ReentrancyGuard, Ownable(msg.sender) {
         // Mark as executed first to prevent reentrancy
         raindrop.executed = true;
 
-        // uint256 amountPerParticipant = raindrop.totalAmount / raindrop.participantCount;
-        // uint256 totalToDistribute = amountPerParticipant * raindrop.participantCount;
         
         // Calculate platform fee
        uint256 platformFee = (raindrop.totalAmount * platformFeeBps) / 10000;

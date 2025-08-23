@@ -69,11 +69,6 @@
 			},
 			{
 				"inputs": [],
-				"name": "BatchProcessingFailed",
-				"type": "error"
-			},
-			{
-				"inputs": [],
 				"name": "CannotDisputeIfWon",
 				"type": "error"
 			},
@@ -370,31 +365,6 @@
 					}
 				],
 				"name": "AdminLiquidityWithdrawn",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "uint256",
-						"name": "marketId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "totalWinners",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "totalAmount",
-						"type": "uint256"
-					}
-				],
-				"name": "BatchWinningsDistributed",
 				"type": "event"
 			},
 			{
@@ -1134,24 +1104,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_marketId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_batchSize",
-						"type": "uint256"
-					}
-				],
-				"name": "batchDistributeWinnings",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "bettingToken",
 				"outputs": [
@@ -1573,40 +1525,6 @@
 						"internalType": "uint256",
 						"name": "",
 						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_marketId",
-						"type": "uint256"
-					}
-				],
-				"name": "getBatchDistributionStatus",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "totalParticipants",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "processedParticipants",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "remainingParticipants",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "distributionComplete",
-						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -2910,11 +2828,11 @@
 			]
 		},
 		"src/PolicastV3.sol/v3.sol": {
-			"keccak256": "0x6f9bdf989d28d3daff7947d132a4cc76d4bd74f24f8f9e90baa70a46e6d132b3",
+			"keccak256": "0xd2e0509a43dbd2276b7e73dcfc7978f9d4101f427d333fa95f3727904dc298d9",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://986b066fcc38c1a5e174176d7af7fcb3ad2413188a0e644515c1bd861557d1ce",
-				"dweb:/ipfs/QmVXEsc1ck5g3NpsBpktjNehP7ep8PjwW4LA2A1kVMrArg"
+				"bzz-raw://0c80ba2e0561831ca4806fe638b667f47cec05392db90a039a5dad18a55d10fc",
+				"dweb:/ipfs/QmNuWrsy6EnzzicBbgRL7HKE7iZevH1TruDUD8cgxE4tG8"
 			]
 		}
 	},

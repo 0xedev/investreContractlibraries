@@ -54,6 +54,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     error NoLPRewards();
     error NotLiquidityProvider();
     error AdminLiquidityAlreadyClaimed();
+    error BatchProcessingFailed();
 
     bytes32 public constant QUESTION_CREATOR_ROLE = keccak256("QUESTION_CREATOR_ROLE");
     bytes32 public constant QUESTION_RESOLVE_ROLE = keccak256("QUESTION_RESOLVE_ROLE");
@@ -231,6 +232,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     event AdminLiquidityWithdrawn(uint256 indexed marketId, address indexed creator, uint256 amount);
     event LPRewardsClaimed(uint256 indexed marketId, address indexed provider, uint256 amount);
     event FeeCollectorUpdated(address indexed oldCollector, address indexed newCollector);
+    event BatchWinningsDistributed(uint256 indexed marketId, uint256 totalWinners, uint256 totalAmount);
 
     constructor(address _bettingToken) Ownable(msg.sender) {
         bettingToken = IERC20(_bettingToken);
@@ -724,6 +726,86 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
         if (!bettingToken.transfer(msg.sender, winnings)) revert TransferFailed();
         emit Claimed(_marketId, msg.sender, winnings);
+    }
+
+    // NEW: Batch distribute winnings to all winners
+    function batchDistributeWinnings(uint256 _marketId, uint256 _batchSize) external nonReentrant validMarket(_marketId) {
+        if (msg.sender != owner() && !hasRole(QUESTION_RESOLVE_ROLE, msg.sender)) revert NotAuthorized();
+        
+        Market storage market = markets[_marketId];
+        if (!market.resolved || market.disputed) revert MarketNotReady();
+        
+        uint256 totalWinningShares = market.options[market.winningOptionId].totalShares;
+        if (totalWinningShares == 0) return; // No winners to distribute to
+        
+        // Only distribute user liquidity, not admin liquidity or platform fees
+        uint256 totalLosingValue = market.userLiquidity - (totalWinningShares * market.options[market.winningOptionId].currentPrice / 1e18);
+        
+        uint256 processed = 0;
+        uint256 totalDistributed = 0;
+        uint256 winnersCount = 0;
+        uint256 startIndex = market.payoutIndex;
+        
+        // Process participants in batches to avoid gas limit issues
+        for (uint256 i = startIndex; i < market.participants.length && processed < _batchSize; i++) {
+            address participant = market.participants[i];
+            
+            // Skip if already claimed
+            if (market.hasClaimed[participant]) {
+                processed++;
+                continue;
+            }
+            
+            uint256 userWinningShares = market.userShares[participant][market.winningOptionId];
+            
+            // Skip if no winning shares
+            if (userWinningShares == 0) {
+                processed++;
+                continue;
+            }
+            
+            // Calculate winnings
+            uint256 winnings = (userWinningShares * market.options[market.winningOptionId].currentPrice / 1e18) + 
+                              (userWinningShares * totalLosingValue / totalWinningShares);
+            
+            if (winnings > 0) {
+                market.hasClaimed[participant] = true;
+                userPortfolios[participant].totalWinnings += winnings;
+                totalWinnings[participant] += winnings;
+                
+                if (!bettingToken.transfer(participant, winnings)) revert TransferFailed();
+                
+                totalDistributed += winnings;
+                winnersCount++;
+                
+                emit Claimed(_marketId, participant, winnings);
+            }
+            
+            processed++;
+        }
+        
+        // Update payout index for next batch
+        market.payoutIndex = startIndex + processed;
+        
+        if (winnersCount > 0) {
+            emit BatchWinningsDistributed(_marketId, winnersCount, totalDistributed);
+        }
+    }
+
+    // NEW: Get batch distribution status
+    function getBatchDistributionStatus(uint256 _marketId) external view validMarket(_marketId) returns (
+        uint256 totalParticipants,
+        uint256 processedParticipants,
+        uint256 remainingParticipants,
+        bool distributionComplete
+    ) {
+        Market storage market = markets[_marketId];
+        uint256 total = market.participants.length;
+        uint256 processed = market.payoutIndex;
+        uint256 remaining = total > processed ? total - processed : 0;
+        bool complete = processed >= total;
+        
+        return (total, processed, remaining, complete);
     }
 
     // Price Calculation Functions

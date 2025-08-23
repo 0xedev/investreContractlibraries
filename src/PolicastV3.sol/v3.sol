@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.;
+pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -22,7 +22,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     error InvalidInput();
     error OnlyAdminOrOwner();
     error MarketEnded();
-    error MarketResolved();
+    error MarketResolvedAlready();
     error OptionInactive();
     error FeeTooHigh();
     error BadDuration();
@@ -271,7 +271,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
     modifier marketActive(uint256 _marketId) {
         if (block.timestamp >= markets[_marketId].endTime) revert MarketEnded();
-        if (markets[_marketId].resolved) revert MarketResolved();
+        if (markets[_marketId].resolved) revert MarketResolvedAlready();
         _;
     }
 

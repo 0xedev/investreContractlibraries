@@ -129,6 +129,16 @@
 			},
 			{
 				"inputs": [],
+				"name": "InsufficientParticipants",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "InsufficientPrizePool",
+				"type": "error"
+			},
+			{
+				"inputs": [],
 				"name": "InsufficientShares",
 				"type": "error"
 			},
@@ -219,6 +229,11 @@
 			},
 			{
 				"inputs": [],
+				"name": "NoSponsoredPrize",
+				"type": "error"
+			},
+			{
+				"inputs": [],
 				"name": "NoWinningShares",
 				"type": "error"
 			},
@@ -235,6 +250,11 @@
 			{
 				"inputs": [],
 				"name": "NotLiquidityProvider",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "NotSponsoredMarket",
 				"type": "error"
 			},
 			{
@@ -292,6 +312,11 @@
 			{
 				"inputs": [],
 				"name": "SameToken",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "SponsoredPrizeAlreadyDistributed",
 				"type": "error"
 			},
 			{
@@ -473,17 +498,11 @@
 					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "optionId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "shares",
+						"name": "tokens",
 						"type": "uint256"
 					}
 				],
-				"name": "FreeSharesClaimed",
+				"name": "FreeTokensClaimed",
 				"type": "event"
 			},
 			{
@@ -872,6 +891,56 @@
 					},
 					{
 						"indexed": true,
+						"internalType": "address",
+						"name": "winner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "SponsoredPrizeClaimed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "marketId",
+						"type": "uint256"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sponsor",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "SponsoredPrizeRefunded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "marketId",
+						"type": "uint256"
+					},
+					{
+						"indexed": true,
 						"internalType": "uint256",
 						"name": "optionId",
 						"type": "uint256"
@@ -1200,6 +1269,30 @@
 			{
 				"inputs": [
 					{
+						"internalType": "uint256",
+						"name": "_marketId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "_user",
+						"type": "address"
+					}
+				],
+				"name": "calculateSponsoredPrize",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "enum PolicastMarketV3.MarketCategory",
 						"name": "",
 						"type": "uint8"
@@ -1227,14 +1320,9 @@
 						"internalType": "uint256",
 						"name": "_marketId",
 						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_optionId",
-						"type": "uint256"
 					}
 				],
-				"name": "claimFreeShares",
+				"name": "claimFreeTokens",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1248,6 +1336,19 @@
 					}
 				],
 				"name": "claimLPRewards",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_marketId",
+						"type": "uint256"
+					}
+				],
+				"name": "claimSponsoredPrize",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1304,7 +1405,7 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "_freeSharesPerUser",
+						"name": "_tokensPerParticipant",
 						"type": "uint256"
 					},
 					{
@@ -1519,25 +1620,56 @@
 			},
 			{
 				"inputs": [],
-				"name": "freeMarketAllowance",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
 				"name": "getBettingToken",
 				"outputs": [
 					{
 						"internalType": "address",
 						"name": "",
 						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_marketId",
+						"type": "uint256"
+					}
+				],
+				"name": "getFreeMarketInfo",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "maxFreeParticipants",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "tokensPerParticipant",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "currentFreeParticipants",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalPrizePool",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "remainingPrizePool",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "isActive",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -1876,6 +2008,50 @@
 			{
 				"inputs": [
 					{
+						"internalType": "uint256",
+						"name": "_marketId",
+						"type": "uint256"
+					}
+				],
+				"name": "getSponsoredMarketInfo",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "sponsor",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "sponsorPrize",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "minimumParticipants",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "currentParticipants",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "prizeDistributed",
+						"type": "bool"
+					},
+					{
+						"internalType": "string",
+						"name": "sponsorMessage",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "address",
 						"name": "_user",
 						"type": "address"
@@ -2014,6 +2190,59 @@
 					}
 				],
 				"name": "hasRole",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_marketId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "_user",
+						"type": "address"
+					}
+				],
+				"name": "hasUserClaimedFreeTokens",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_marketId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "_user",
+						"type": "address"
+					}
+				],
+				"name": "hasUserClaimedSponsoredPrize",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -2246,6 +2475,19 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_marketId",
+						"type": "uint256"
+					}
+				],
+				"name": "refundSponsor",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "renounceOwnership",
 				"outputs": [],
@@ -2343,19 +2585,6 @@
 					}
 				],
 				"name": "setFeeCollector",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_allowance",
-						"type": "uint256"
-					}
-				],
-				"name": "setFreeMarketAllowance",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -2504,25 +2733,6 @@
 						"type": "address"
 					}
 				],
-				"name": "userFreeSharesUsed",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "",
-						"type": "address"
-					}
-				],
 				"name": "userPortfolios",
 				"outputs": [
 					{
@@ -2637,6 +2847,19 @@
 			{
 				"inputs": [],
 				"name": "withdrawPlatformFees",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_marketId",
+						"type": "uint256"
+					}
+				],
+				"name": "withdrawUnusedPrizePool",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -2828,11 +3051,11 @@
 			]
 		},
 		"src/PolicastV3.sol/v3.sol": {
-			"keccak256": "0xd2e0509a43dbd2276b7e73dcfc7978f9d4101f427d333fa95f3727904dc298d9",
+			"keccak256": "0xc44e6c24bc0b3e19ac8423cfadbddc9ebc65d7801a3e2a39c5e25854c1382495",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://0c80ba2e0561831ca4806fe638b667f47cec05392db90a039a5dad18a55d10fc",
-				"dweb:/ipfs/QmNuWrsy6EnzzicBbgRL7HKE7iZevH1TruDUD8cgxE4tG8"
+				"bzz-raw://de31f3f0f22a7be2e6d3c45836a30c6b0b05cbbbd6072d8cd2443af756c23144",
+				"dweb:/ipfs/QmPCg6oUq5YkHRQP3YgHrhPYiEC95d1pWXsUASFaNJSkRV"
 			]
 		}
 	},

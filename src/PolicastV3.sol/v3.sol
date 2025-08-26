@@ -8,7 +8,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
-    // ERRORS
+//     // ERRORS
     error InsufficientBalance();
     error InvalidMarket();
     error MarketNotActive();
@@ -36,6 +36,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     error AlreadyClaimedFree();
     error FreeSlotseFull();
     error ExceedsFreeAllowance();
+    error InsufficientPrizePool();
     error CannotSwapSameOption();
     error AmountMustBePositive();
     error InsufficientShares();
@@ -54,12 +55,16 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     error NoLPRewards();
     error NotLiquidityProvider();
     error AdminLiquidityAlreadyClaimed();
+    error NotSponsoredMarket();
+    error InsufficientParticipants();
+    error SponsoredPrizeAlreadyDistributed();
+    error NoSponsoredPrize();
 
     bytes32 public constant QUESTION_CREATOR_ROLE = keccak256("QUESTION_CREATOR_ROLE");
     bytes32 public constant QUESTION_RESOLVE_ROLE = keccak256("QUESTION_RESOLVE_ROLE");
     bytes32 public constant MARKET_VALIDATOR_ROLE = keccak256("MARKET_VALIDATOR_ROLE");
 
-    // Market Categories
+//     // Market Categories
     enum MarketCategory {
         POLITICS,
         SPORTS,
@@ -71,7 +76,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         OTHER
     }
 
-    // Market Types
+//     // Market Types
     enum MarketType {
         PAID,           // Regular betting token markets
         FREE_ENTRY,     // Free markets with limited participation
@@ -91,11 +96,13 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
     struct FreeMarketConfig {
         uint256 maxFreeParticipants;     // Max users who can enter for free
-        uint256 freeSharesPerUser;       // Max free shares per user
+        uint256 tokensPerParticipant;    // Buster tokens per user (instead of shares)
         uint256 currentFreeParticipants; // Current count
+        uint256 totalPrizePool;          // Total tokens allocated for free users
+        uint256 remainingPrizePool;      // Remaining tokens available
         bool isActive;                   // Can still accept free entries
-        mapping(address => bool) hasClaimedFree; // Track who claimed free shares
-        mapping(address => uint256) freeSharesClaimed; // Amount claimed per user
+        mapping(address => bool) hasClaimedFree; // Track who claimed free tokens
+        mapping(address => uint256) tokensReceived; // Amount of free tokens claimed per user
     }
 
     struct SponsoredMarketConfig {
@@ -129,6 +136,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         mapping(uint256 => MarketOption) options;
         mapping(address => mapping(uint256 => uint256)) userShares; // user => optionId => shares
         mapping(address => bool) hasClaimed;
+        mapping(address => bool) hasClaimedSponsored; // NEW: Track sponsored prize claims
         mapping(address => uint256) lpContributions; // NEW: Track LP contributions
         mapping(address => bool) lpRewardsClaimed;   // NEW: Track LP reward claims
         address[] participants;
@@ -162,7 +170,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 tradeCount;
     }
 
-    // State variables
+//     // State variables
     IERC20 public bettingToken;
     address public previousBettingToken;     // Track previous token for migration
     uint256 public tokenUpdatedAt;           // When token was last updated
@@ -173,11 +181,10 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     uint256 public constant MIN_MARKET_DURATION = 1 hours;
     uint256 public constant MAX_MARKET_DURATION = 365 days;
     uint256 public constant AMM_FEE_RATE = 30; // 0.3% AMM swap fee
-    uint256 public freeMarketAllowance = 1000; // Global free shares allowance
     address public feeCollector;              // NEW: Address that can withdraw platform fees
     uint256 public totalPlatformFeesCollected; // NEW: Global platform fees
 
-    // Mappings
+//     // Mappings
     mapping(uint256 => Market) internal markets;
     mapping(address => UserPortfolio) public userPortfolios;
     mapping(address => Trade[]) public userTradeHistory;
@@ -186,11 +193,10 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     mapping(MarketCategory => uint256[]) public categoryMarkets;
     mapping(address => uint256) public totalWinnings;
     mapping(MarketType => uint256[]) public marketsByType; // Markets by type
-    mapping(address => uint256) public userFreeSharesUsed; // Track free shares used per user
     mapping(address => uint256) public lpRewardsEarned;   // NEW: LP rewards earned globally
     address[] public allParticipants;
 
-    // Events
+//     // Events
     event MarketCreated(
         uint256 indexed marketId,
         string question,
@@ -200,7 +206,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         MarketType marketType,
         address creator
     );
-    event FreeSharesClaimed(uint256 indexed marketId, address indexed user, uint256 optionId, uint256 shares);
+    event FreeTokensClaimed(uint256 indexed marketId, address indexed user, uint256 tokens);
     event MarketSponsored(uint256 indexed marketId, address indexed sponsor, uint256 prizeAmount, string message);
     event BettingTokenUpdated(address indexed oldToken, address indexed newToken, uint256 timestamp);
     event AMMSwap(uint256 indexed marketId, uint256 optionIdIn, uint256 optionIdOut, uint256 amountIn, uint256 amountOut, address trader);
@@ -231,6 +237,8 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     event AdminLiquidityWithdrawn(uint256 indexed marketId, address indexed creator, uint256 amount);
     event LPRewardsClaimed(uint256 indexed marketId, address indexed provider, uint256 amount);
     event FeeCollectorUpdated(address indexed oldCollector, address indexed newCollector);
+    event SponsoredPrizeClaimed(uint256 indexed marketId, address indexed winner, uint256 amount);
+    event SponsoredPrizeRefunded(uint256 indexed marketId, address indexed sponsor, uint256 amount);
 
     constructor(address _bettingToken) Ownable(msg.sender) {
         bettingToken = IERC20(_bettingToken);
@@ -239,7 +247,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    // Token Management Functions
+//     // Token Management Functions
     function updateBettingToken(address _newToken) external {
         if (msg.sender != owner() && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert OnlyAdminOrOwner();
         if (_newToken == address(0)) revert InvalidToken();
@@ -252,10 +260,6 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         emit BettingTokenUpdated(previousBettingToken, _newToken, block.timestamp);
     }
 
-    function setFreeMarketAllowance(uint256 _allowance) external onlyOwner {
-        freeMarketAllowance = _allowance;
-    }
-
     function setFeeCollector(address _feeCollector) external onlyOwner {
         if (_feeCollector == address(0)) revert InvalidToken();
         address oldCollector = feeCollector;
@@ -263,7 +267,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         emit FeeCollectorUpdated(oldCollector, _feeCollector);
     }
 
-    // Modifiers
+//     // Modifiers
     modifier validMarket(uint256 _marketId) {
         if (_marketId >= marketCount) revert InvalidMarket();
         _;
@@ -281,7 +285,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         _;
     }
 
-    // Admin Functions
+//     // Admin Functions
     function grantQuestionCreatorRole(address _account) external onlyOwner {
         grantRole(QUESTION_CREATOR_ROLE, _account);
     }
@@ -307,7 +311,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         _unpause();
     }
 
-    // Market Creation
+//     // Market Creation
     function createMarket(
         string memory _question,
         string memory _description,
@@ -377,7 +381,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         return marketId;
     }
 
-    // Create Free Entry Market
+//     // Create Free Entry Market
     function createFreeMarket(
         string memory _question,
         string memory _description,
@@ -386,14 +390,23 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 _duration,
         MarketCategory _category,
         uint256 _maxFreeParticipants,
-        uint256 _freeSharesPerUser,
+        uint256 _tokensPerParticipant,
         uint256 _initialLiquidity
     ) external whenNotPaused returns (uint256) {
+        // Calculate total required: liquidity + prize pool
+        uint256 totalPrizePool = _maxFreeParticipants * _tokensPerParticipant;
+        uint256 totalRequired = _initialLiquidity + totalPrizePool;
+        
+        // Transfer both liquidity and prize pool from creator
+        if (!bettingToken.transferFrom(msg.sender, address(this), totalRequired)) revert TransferFailed();
+        
         uint256 marketId = createMarket(_question, _description, _optionNames, _optionDescriptions, _duration, _category, MarketType.FREE_ENTRY, _initialLiquidity);
         
         Market storage market = markets[marketId];
         market.freeConfig.maxFreeParticipants = _maxFreeParticipants;
-        market.freeConfig.freeSharesPerUser = _freeSharesPerUser;
+        market.freeConfig.tokensPerParticipant = _tokensPerParticipant;
+        market.freeConfig.totalPrizePool = totalPrizePool;
+        market.freeConfig.remainingPrizePool = totalPrizePool;
         market.freeConfig.isActive = true;
         
         return marketId;
@@ -448,24 +461,23 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     }
 
     // Trading Functions
-    function claimFreeShares(
-        uint256 _marketId,
-        uint256 _optionId
-    ) external nonReentrant whenNotPaused validMarket(_marketId) marketActive(_marketId) validOption(_marketId, _optionId) {
+    function claimFreeTokens(
+        uint256 _marketId
+    ) external nonReentrant whenNotPaused validMarket(_marketId) marketActive(_marketId) {
         Market storage market = markets[_marketId];
         if (market.marketType != MarketType.FREE_ENTRY) revert NotFreeMarket();
         if (!market.freeConfig.isActive) revert FreeEntryInactive();
         if (market.freeConfig.hasClaimedFree[msg.sender]) revert AlreadyClaimedFree();
         if (market.freeConfig.currentFreeParticipants >= market.freeConfig.maxFreeParticipants) revert FreeSlotseFull();
-        if (userFreeSharesUsed[msg.sender] + market.freeConfig.freeSharesPerUser > freeMarketAllowance) revert ExceedsFreeAllowance();
+        if (market.freeConfig.remainingPrizePool < market.freeConfig.tokensPerParticipant) revert InsufficientPrizePool();
 
-        uint256 freeShares = market.freeConfig.freeSharesPerUser;
+        uint256 freeTokens = market.freeConfig.tokensPerParticipant;
         
         // Update tracking
         market.freeConfig.hasClaimedFree[msg.sender] = true;
-        market.freeConfig.freeSharesClaimed[msg.sender] = freeShares;
+        market.freeConfig.tokensReceived[msg.sender] = freeTokens;
         market.freeConfig.currentFreeParticipants++;
-        userFreeSharesUsed[msg.sender] += freeShares;
+        market.freeConfig.remainingPrizePool -= freeTokens;
 
         // Add user as participant if new
         if (_isNewParticipant(msg.sender, _marketId)) {
@@ -475,14 +487,13 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
             }
         }
 
-        // Update shares
-        market.userShares[msg.sender][_optionId] += freeShares;
-        market.options[_optionId].totalShares += freeShares;
+        // Transfer actual Buster tokens to user
+        if (!bettingToken.transfer(msg.sender, freeTokens)) revert TransferFailed();
         
-        // Update user portfolio
+        // Update user portfolio (tokens received count as "investment" for tracking)
         userPortfolios[msg.sender].tradeCount++;
 
-        emit FreeSharesClaimed(_marketId, msg.sender, _optionId, freeShares);
+        emit FreeTokensClaimed(_marketId, msg.sender, freeTokens);
     }
 
     // AMM Swap Function
@@ -726,6 +737,56 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         emit Claimed(_marketId, msg.sender, winnings);
     }
 
+    // NEW: Claim sponsored market ETH prizes
+    function claimSponsoredPrize(uint256 _marketId) external nonReentrant validMarket(_marketId) {
+        Market storage market = markets[_marketId];
+        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
+        if (!market.resolved || market.disputed) revert MarketNotReady();
+        if (market.hasClaimedSponsored[msg.sender]) revert AlreadyClaimed();
+        if (market.sponsorConfig.prizeDistributed) revert SponsoredPrizeAlreadyDistributed();
+
+        uint256 userWinningShares = market.userShares[msg.sender][market.winningOptionId];
+        if (userWinningShares == 0) revert NoWinningShares();
+
+        // Check if minimum participants threshold was met
+        if (market.participants.length < market.sponsorConfig.minimumParticipants) revert InsufficientParticipants();
+
+        uint256 totalWinningShares = market.options[market.winningOptionId].totalShares;
+        if (totalWinningShares == 0) revert NoSponsoredPrize();
+
+        // Calculate user's share of the ETH prize pool
+        uint256 ethPrize = (userWinningShares * market.sponsorConfig.sponsorPrize) / totalWinningShares;
+        
+        market.hasClaimedSponsored[msg.sender] = true;
+        
+        // Transfer ETH prize to winner
+        (bool success, ) = payable(msg.sender).call{value: ethPrize}("");
+        if (!success) revert TransferFailed();
+
+        emit SponsoredPrizeClaimed(_marketId, msg.sender, ethPrize);
+    }
+
+    // NEW: Refund sponsor if minimum participants not met
+    function refundSponsor(uint256 _marketId) external nonReentrant validMarket(_marketId) {
+        Market storage market = markets[_marketId];
+        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
+        if (!market.resolved) revert MarketNotResolved();
+        if (market.sponsorConfig.prizeDistributed) revert SponsoredPrizeAlreadyDistributed();
+        if (msg.sender != market.sponsorConfig.sponsor) revert NotAuthorized();
+
+        // Only refund if minimum participants not met
+        if (market.participants.length >= market.sponsorConfig.minimumParticipants) revert InsufficientParticipants();
+
+        uint256 refundAmount = market.sponsorConfig.sponsorPrize;
+        market.sponsorConfig.prizeDistributed = true; // Mark as handled
+        
+        // Refund ETH to sponsor
+        (bool success, ) = payable(market.sponsorConfig.sponsor).call{value: refundAmount}("");
+        if (!success) revert TransferFailed();
+
+        emit SponsoredPrizeRefunded(_marketId, market.sponsorConfig.sponsor, refundAmount);
+    }
+
     // Price Calculation Functions
     function calculateCurrentPrice(uint256 _marketId, uint256 _optionId) public view returns (uint256) {
         Market storage market = markets[_marketId];
@@ -741,12 +802,12 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 k = option.k;
         
         if (_isBuy) {
-            // New reserve after buying shares
-            uint256 newReserve = reserve + _quantity;
+            // FIXED: When buying, reserve decreases (liquidity consumed) → price increases
+            uint256 newReserve = reserve > _quantity ? reserve - _quantity : reserve / 2;
             return (k * 1e18) / newReserve;
         } else {
-            // New reserve after selling shares
-            uint256 newReserve = reserve > _quantity ? reserve - _quantity : reserve / 2;
+            // When selling, reserve increases (liquidity added) → price decreases
+            uint256 newReserve = reserve + _quantity;
             return (k * 1e18) / newReserve;
         }
     }
@@ -845,6 +906,21 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         
         if (!bettingToken.transfer(market.creator, liquidityToReturn)) revert TransferFailed();
         emit AdminLiquidityWithdrawn(_marketId, market.creator, liquidityToReturn);
+    }
+
+    // NEW: Withdraw unused prize pool from free markets
+    function withdrawUnusedPrizePool(uint256 _marketId) external nonReentrant validMarket(_marketId) {
+        Market storage market = markets[_marketId];
+        if (msg.sender != market.creator) revert NotAuthorized();
+        if (market.marketType != MarketType.FREE_ENTRY) revert NotFreeMarket();
+        if (!market.resolved) revert MarketNotResolved();
+        if (market.freeConfig.remainingPrizePool == 0) revert AmountMustBePositive();
+        
+        uint256 unusedTokens = market.freeConfig.remainingPrizePool;
+        market.freeConfig.remainingPrizePool = 0;
+        
+        if (!bettingToken.transfer(market.creator, unusedTokens)) revert TransferFailed();
+        emit AdminLiquidityWithdrawn(_marketId, market.creator, unusedTokens); // Reuse event
     }
 
     // NEW: LP Rewards Claiming
@@ -1023,5 +1099,86 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
             marketCount,
             tradeCount
         );
+    }
+
+    // NEW: Get free market configuration
+    function getFreeMarketInfo(uint256 _marketId) external view validMarket(_marketId) returns (
+        uint256 maxFreeParticipants,
+        uint256 tokensPerParticipant,
+        uint256 currentFreeParticipants,
+        uint256 totalPrizePool,
+        uint256 remainingPrizePool,
+        bool isActive
+    ) {
+        Market storage market = markets[_marketId];
+        if (market.marketType != MarketType.FREE_ENTRY) revert NotFreeMarket();
+        
+        return (
+            market.freeConfig.maxFreeParticipants,
+            market.freeConfig.tokensPerParticipant,
+            market.freeConfig.currentFreeParticipants,
+            market.freeConfig.totalPrizePool,
+            market.freeConfig.remainingPrizePool,
+            market.freeConfig.isActive
+        );
+    }
+
+    // NEW: Check if user claimed free tokens
+    function hasUserClaimedFreeTokens(uint256 _marketId, address _user) external view validMarket(_marketId) returns (bool, uint256) {
+        Market storage market = markets[_marketId];
+        if (market.marketType != MarketType.FREE_ENTRY) revert NotFreeMarket();
+        
+        return (
+            market.freeConfig.hasClaimedFree[_user],
+            market.freeConfig.tokensReceived[_user]
+        );
+    }
+
+    // NEW: Get sponsored market configuration
+    function getSponsoredMarketInfo(uint256 _marketId) external view validMarket(_marketId) returns (
+        address sponsor,
+        uint256 sponsorPrize,
+        uint256 minimumParticipants,
+        uint256 currentParticipants,
+        bool prizeDistributed,
+        string memory sponsorMessage
+    ) {
+        Market storage market = markets[_marketId];
+        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
+        
+        return (
+            market.sponsorConfig.sponsor,
+            market.sponsorConfig.sponsorPrize,
+            market.sponsorConfig.minimumParticipants,
+            market.participants.length,
+            market.sponsorConfig.prizeDistributed,
+            market.sponsorConfig.sponsorMessage
+        );
+    }
+
+    // NEW: Check if user claimed sponsored prize
+    function hasUserClaimedSponsoredPrize(uint256 _marketId, address _user) external view validMarket(_marketId) returns (bool) {
+        Market storage market = markets[_marketId];
+        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
+        
+        return market.hasClaimedSponsored[_user];
+    }
+
+    // NEW: Calculate user's potential sponsored prize
+    function calculateSponsoredPrize(uint256 _marketId, address _user) external view validMarket(_marketId) returns (uint256) {
+        Market storage market = markets[_marketId];
+        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
+        if (!market.resolved) return 0;
+        
+        uint256 userWinningShares = market.userShares[_user][market.winningOptionId];
+        if (userWinningShares == 0) return 0;
+        
+        uint256 totalWinningShares = market.options[market.winningOptionId].totalShares;
+        if (totalWinningShares == 0) return 0;
+        
+        // Check if minimum participants threshold was met
+        if (market.participants.length < market.sponsorConfig.minimumParticipants) return 0;
+        
+        return (userWinningShares * market.sponsorConfig.sponsorPrize) / totalWinningShares;
     }
 }

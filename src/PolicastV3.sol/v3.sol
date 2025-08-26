@@ -9,119 +9,12 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {IPolicast} from "./iv3.sol";
 
 contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
-//  
 
     bytes32 public constant QUESTION_CREATOR_ROLE = keccak256("QUESTION_CREATOR_ROLE");
     bytes32 public constant QUESTION_RESOLVE_ROLE = keccak256("QUESTION_RESOLVE_ROLE");
     bytes32 public constant MARKET_VALIDATOR_ROLE = keccak256("MARKET_VALIDATOR_ROLE");
 
-//     // Market Categories
-    enum MarketCategory {
-        POLITICS,
-        SPORTS,
-        ENTERTAINMENT,
-        TECHNOLOGY,
-        ECONOMICS,
-        SCIENCE,
-        WEATHER,
-        OTHER
-    }
-
-//     // Market Types
-    enum MarketType {
-        PAID,           // Regular betting token markets
-        FREE_ENTRY,     // Free markets with limited participation
-        SPONSORED       // Sponsored by third parties with prize pools
-    }
-
-    struct MarketOption {
-        string name;
-        string description;
-        uint256 totalShares;
-        uint256 totalVolume;
-        uint256 currentPrice; // Price in wei (scaled by 1e18)
-        bool isActive;
-        uint256 k; // AMM liquidity constant for this option
-        uint256 reserve; // AMM reserve for this option
-    }
-
-    struct FreeMarketConfig {
-        uint256 maxFreeParticipants;     // Max users who can enter for free
-        uint256 tokensPerParticipant;    // Buster tokens per user (instead of shares)
-        uint256 currentFreeParticipants; // Current count
-        uint256 totalPrizePool;          // Total tokens allocated for free users
-        uint256 remainingPrizePool;      // Remaining tokens available
-        bool isActive;                   // Can still accept free entries
-        mapping(address => bool) hasClaimedFree; // Track who claimed free tokens
-        mapping(address => uint256) tokensReceived; // Amount of free tokens claimed per user
-    }
-
-    struct SponsoredMarketConfig {
-        address sponsor;                 // Sponsor address
-        uint256 sponsorPrize;           // Total prize pool from sponsor
-        uint256 minimumParticipants;    // Min participants for prize distribution
-        bool prizeDistributed;          // Whether prize has been distributed
-        string sponsorMessage;          // Sponsor message/branding
-    }
-
-    struct Market {
-        string question;
-        string description;
-        uint256 endTime;
-        MarketCategory category;
-        MarketType marketType;           // Market type (PAID, FREE_ENTRY, SPONSORED)
-        uint256 winningOptionId;
-        bool resolved;
-        bool disputed;
-        bool validated;
-        address creator;
-        uint256 adminInitialLiquidity;   // NEW: Admin's initial liquidity (separate tracking)
-        uint256 userLiquidity;           // NEW: User contributions only
-        uint256 totalVolume;
-        uint256 createdAt;
-        uint256 optionCount;
-        uint256 ammLiquidityPool;        // Total AMM liquidity
-        uint256 platformFeesCollected;   // NEW: Platform fees for this market
-        uint256 ammFeesCollected;        // NEW: AMM fees for LPs
-        bool adminLiquidityClaimed;      // NEW: Track if admin claimed their liquidity back
-        mapping(uint256 => MarketOption) options;
-        mapping(address => mapping(uint256 => uint256)) userShares; // user => optionId => shares
-        mapping(address => bool) hasClaimed;
-        mapping(address => bool) hasClaimedSponsored; // NEW: Track sponsored prize claims
-        mapping(address => uint256) lpContributions; // NEW: Track LP contributions
-        mapping(address => bool) lpRewardsClaimed;   // NEW: Track LP reward claims
-        address[] participants;
-        address[] liquidityProviders;    // NEW: Track LP addresses
-        uint256 payoutIndex;
-        FreeMarketConfig freeConfig;     // Free market configuration
-        SponsoredMarketConfig sponsorConfig; // Sponsored market configuration
-    }
-
-    struct Trade {
-        uint256 marketId;
-        uint256 optionId;
-        address buyer;
-        address seller;
-        uint256 price;
-        uint256 quantity;
-        uint256 timestamp;
-    }
-
-    struct PricePoint {
-        uint256 price;
-        uint256 timestamp;
-        uint256 volume;
-    }
-
-    struct UserPortfolio {
-        uint256 totalInvested;
-        uint256 totalWinnings;
-        int256 unrealizedPnL;
-        int256 realizedPnL;
-        uint256 tradeCount;
-    }
-
-//     // State variables
+  // State variables
     IERC20 public bettingToken;
     address public previousBettingToken;     // Track previous token for migration
     uint256 public tokenUpdatedAt;           // When token was last updated
@@ -135,61 +28,18 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     address public feeCollector;              // NEW: Address that can withdraw platform fees
     uint256 public totalPlatformFeesCollected; // NEW: Global platform fees
 
-//     // Mappings
-    mapping(uint256 => Market) internal markets;
-    mapping(address => UserPortfolio) public userPortfolios;
-    mapping(address => Trade[]) public userTradeHistory;
-    mapping(uint256 => Trade[]) public marketTrades;
-    mapping(uint256 => mapping(uint256 => PricePoint[])) public priceHistory; // marketId => optionId => prices
-    mapping(MarketCategory => uint256[]) public categoryMarkets;
+  // Mappings
+    mapping(uint256 => IPolicast.Market) internal markets;
+    mapping(address => IPolicast.UserPortfolio) public userPortfolios;
+    mapping(address => IPolicast.Trade[]) public userTradeHistory;
+    mapping(uint256 => IPolicast.Trade[]) public marketTrades;
+    mapping(uint256 => mapping(uint256 => IPolicast.PricePoint[])) public priceHistory; // marketId => optionId => prices
+    mapping(IPolicast.MarketCategory => uint256[]) public categoryMarkets;
     mapping(address => uint256) public totalWinnings;
-    mapping(MarketType => uint256[]) public marketsByType; // Markets by type
+    mapping(IPolicast.MarketType => uint256[]) public marketsByType; // Markets by type
     mapping(address => uint256) public lpRewardsEarned;   // NEW: LP rewards earned globally
     address[] public allParticipants;
 
-//     // Events
-    event MarketCreated(
-        uint256 indexed marketId,
-        string question,
-        string[] options,
-        uint256 endTime,
-        MarketCategory category,
-        MarketType marketType,
-        address creator
-    );
-    event FreeTokensClaimed(uint256 indexed marketId, address indexed user, uint256 tokens);
-    event MarketSponsored(uint256 indexed marketId, address indexed sponsor, uint256 prizeAmount, string message);
-    event BettingTokenUpdated(address indexed oldToken, address indexed newToken, uint256 timestamp);
-    event AMMSwap(uint256 indexed marketId, uint256 optionIdIn, uint256 optionIdOut, uint256 amountIn, uint256 amountOut, address trader);
-    event LiquidityAdded(uint256 indexed marketId, address indexed provider, uint256 amount);
-    event MarketValidated(uint256 indexed marketId, address validator);
-    event TradeExecuted(
-        uint256 indexed marketId,
-        uint256 indexed optionId,
-        address indexed buyer,
-        address seller,
-        uint256 price,
-        uint256 quantity,
-        uint256 tradeId
-    );
-    event SharesSold(
-        uint256 indexed marketId,
-        uint256 indexed optionId,
-        address indexed seller,
-        uint256 quantity,
-        uint256 price
-    );
-    event MarketResolved(uint256 indexed marketId, uint256 winningOptionId, address resolver);
-    event MarketDisputed(uint256 indexed marketId, address disputer, string reason);
-    event Claimed(uint256 indexed marketId, address indexed user, uint256 amount);
-    event FeeCollected(uint256 indexed marketId, uint256 amount);
-    event MarketPaused(uint256 indexed marketId);
-    event PlatformFeesWithdrawn(address indexed collector, uint256 amount);
-    event AdminLiquidityWithdrawn(uint256 indexed marketId, address indexed creator, uint256 amount);
-    event LPRewardsClaimed(uint256 indexed marketId, address indexed provider, uint256 amount);
-    event FeeCollectorUpdated(address indexed oldCollector, address indexed newCollector);
-    event SponsoredPrizeClaimed(uint256 indexed marketId, address indexed winner, uint256 amount);
-    event SponsoredPrizeRefunded(uint256 indexed marketId, address indexed sponsor, uint256 amount);
 
     constructor(address _bettingToken) Ownable(msg.sender) {
         bettingToken = IERC20(_bettingToken);
@@ -200,39 +50,39 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
 //     // Token Management Functions
     function updateBettingToken(address _newToken) external {
-        if (msg.sender != owner() && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert OnlyAdminOrOwner();
-        if (_newToken == address(0)) revert InvalidToken();
-        if (_newToken == address(bettingToken)) revert SameToken();
+        if (msg.sender != owner() && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert IPolicast.OnlyAdminOrOwner();
+        if (_newToken == address(0)) revert IPolicast.InvalidToken();
+        if (_newToken == address(bettingToken)) revert IPolicast.SameToken();
         
         previousBettingToken = address(bettingToken);
         bettingToken = IERC20(_newToken);
         tokenUpdatedAt = block.timestamp;
         
-        emit BettingTokenUpdated(previousBettingToken, _newToken, block.timestamp);
+        emit IPolicast.BettingTokenUpdated(previousBettingToken, _newToken, block.timestamp);
     }
 
     function setFeeCollector(address _feeCollector) external onlyOwner {
-        if (_feeCollector == address(0)) revert InvalidToken();
+        if (_feeCollector == address(0)) revert IPolicast.InvalidToken();
         address oldCollector = feeCollector;
         feeCollector = _feeCollector;
-        emit FeeCollectorUpdated(oldCollector, _feeCollector);
+        emit IPolicast.FeeCollectorUpdated(oldCollector, _feeCollector);
     }
 
 //     // Modifiers
     modifier validMarket(uint256 _marketId) {
-        if (_marketId >= marketCount) revert InvalidMarket();
+        if (_marketId >= marketCount) revert IPolicast.InvalidMarket();
         _;
     }
 
     modifier marketActive(uint256 _marketId) {
-        if (block.timestamp >= markets[_marketId].endTime) revert MarketEnded();
-        if (markets[_marketId].resolved) revert MarketResolvedAlready();
+        if (block.timestamp >= markets[_marketId].endTime) revert IPolicast.MarketEnded();
+        if (markets[_marketId].resolved) revert IPolicast.MarketResolvedAlready();
         _;
     }
 
     modifier validOption(uint256 _marketId, uint256 _optionId) {
-        if (_optionId >= markets[_marketId].optionCount) revert InvalidOption();
-        if (!markets[_marketId].options[_optionId].isActive) revert OptionInactive();
+        if (_optionId >= markets[_marketId].optionCount) revert IPolicast.InvalidOption();
+        if (!markets[_marketId].options[_optionId].isActive) revert IPolicast.OptionInactive();
         _;
     }
 
@@ -250,7 +100,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     }
 
     function setPlatformFeeRate(uint256 _feeRate) external onlyOwner {
-        if (_feeRate > 1000) revert FeeTooHigh();
+        if (_feeRate > 1000) revert IPolicast.FeeTooHigh();
         platformFeeRate = _feeRate;
     }
 
@@ -269,22 +119,22 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         string[] memory _optionNames,
         string[] memory _optionDescriptions,
         uint256 _duration,
-        MarketCategory _category,
-        MarketType _marketType,
+        IPolicast.MarketCategory _category,
+       IPolicast.MarketType _marketType,
         uint256 _initialLiquidity
     ) public whenNotPaused returns (uint256) {
-        if (msg.sender != owner() && !hasRole(QUESTION_CREATOR_ROLE, msg.sender)) revert NotAuthorized();
-        if (_duration < MIN_MARKET_DURATION || _duration > MAX_MARKET_DURATION) revert BadDuration();
-        if (bytes(_question).length == 0) revert EmptyQuestion();
-        if (_optionNames.length < 2 || _optionNames.length > MAX_OPTIONS) revert BadOptionCount();
-        if (_optionNames.length != _optionDescriptions.length) revert LengthMismatch();
-        if (_initialLiquidity < 100 * 1e18) revert MinTokensRequired();
+        if (msg.sender != owner() && !hasRole(QUESTION_CREATOR_ROLE, msg.sender)) revert IPolicast.NotAuthorized();
+        if (_duration < MIN_MARKET_DURATION || _duration > MAX_MARKET_DURATION) revert IPolicast.BadDuration();
+        if (bytes(_question).length == 0) revert IPolicast.EmptyQuestion();
+        if (_optionNames.length < 2 || _optionNames.length > MAX_OPTIONS) revert IPolicast.BadOptionCount();
+        if (_optionNames.length != _optionDescriptions.length) revert IPolicast.LengthMismatch();
+        if (_initialLiquidity < 100 * 1e18) revert IPolicast.MinTokensRequired();
 
         // Transfer initial liquidity from creator
-        if (!bettingToken.transferFrom(msg.sender, address(this), _initialLiquidity)) revert TransferFailed();
+        if (!bettingToken.transferFrom(msg.sender, address(this), _initialLiquidity)) revert IPolicast.TransferFailed();
 
         uint256 marketId = marketCount++;
-        Market storage market = markets[marketId];
+        IPolicast.Market storage market = markets[marketId];
         market.question = _question;
         market.description = _description;
         market.endTime = block.timestamp + _duration;
@@ -306,7 +156,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 initialK = _initialLiquidity / _optionNames.length; // AMM constant per option
         
         for (uint256 i = 0; i < _optionNames.length; i++) {
-            market.options[i] = MarketOption({
+            market.options[i] = IPolicast.MarketOption({
                 name: _optionNames[i],
                 description: _optionDescriptions[i],
                 totalShares: 0,
@@ -318,7 +168,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
             });
 
             // Initialize price history
-            priceHistory[marketId][i].push(PricePoint({
+            priceHistory[marketId][i].push(IPolicast.PricePoint({
                 price: initialPrice,
                 timestamp: block.timestamp,
                 volume: 0
@@ -328,7 +178,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         categoryMarkets[_category].push(marketId);
         marketsByType[_marketType].push(marketId);
 
-        emit MarketCreated(marketId, _question, _optionNames, market.endTime, _category, _marketType, msg.sender);
+        emit IPolicast.MarketCreated(marketId, _question, _optionNames, market.endTime, _category, _marketType, msg.sender);
         return marketId;
     }
 
@@ -339,7 +189,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         string[] memory _optionNames,
         string[] memory _optionDescriptions,
         uint256 _duration,
-        MarketCategory _category,
+        IPolicast.MarketCategory _category,
         uint256 _maxFreeParticipants,
         uint256 _tokensPerParticipant,
         uint256 _initialLiquidity
@@ -349,11 +199,11 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 totalRequired = _initialLiquidity + totalPrizePool;
         
         // Transfer both liquidity and prize pool from creator
-        if (!bettingToken.transferFrom(msg.sender, address(this), totalRequired)) revert TransferFailed();
+        if (!bettingToken.transferFrom(msg.sender, address(this), totalRequired)) revert IPolicast.TransferFailed();
         
-        uint256 marketId = createMarket(_question, _description, _optionNames, _optionDescriptions, _duration, _category, MarketType.FREE_ENTRY, _initialLiquidity);
+        uint256 marketId = createMarket(_question, _description, _optionNames, _optionDescriptions, _duration, _category, IPolicast.MarketType.FREE_ENTRY, _initialLiquidity);
         
-        Market storage market = markets[marketId];
+        IPolicast.Market storage market = markets[marketId];
         market.freeConfig.maxFreeParticipants = _maxFreeParticipants;
         market.freeConfig.tokensPerParticipant = _tokensPerParticipant;
         market.freeConfig.totalPrizePool = totalPrizePool;
@@ -370,22 +220,22 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         string[] memory _optionNames,
         string[] memory _optionDescriptions,
         uint256 _duration,
-        MarketCategory _category,
+        IPolicast.MarketCategory _category,
         uint256 _minimumParticipants,
         string memory _sponsorMessage,
         uint256 _initialLiquidity
     ) external payable whenNotPaused returns (uint256) {
-        if (msg.value == 0) revert SamePrizeRequired();
+        if (msg.value == 0) revert IPolicast.SamePrizeRequired();
         
-        uint256 marketId = createMarket(_question, _description, _optionNames, _optionDescriptions, _duration, _category, MarketType.SPONSORED, _initialLiquidity);
+        uint256 marketId = createMarket(_question, _description, _optionNames, _optionDescriptions, _duration, _category, IPolicast.MarketType.SPONSORED, _initialLiquidity);
         
-        Market storage market = markets[marketId];
+        IPolicast.Market storage market = markets[marketId];
         market.sponsorConfig.sponsor = msg.sender;
         market.sponsorConfig.sponsorPrize = msg.value;
         market.sponsorConfig.minimumParticipants = _minimumParticipants;
         market.sponsorConfig.sponsorMessage = _sponsorMessage;
         
-        emit MarketSponsored(marketId, msg.sender, msg.value, _sponsorMessage);
+        emit IPolicast.MarketSponsored(marketId, msg.sender, msg.value, _sponsorMessage);
         return marketId;
     }
 
@@ -396,31 +246,31 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         string[] memory _optionNames,
         string[] memory _optionDescriptions,
         uint256 _duration,
-        MarketCategory _category,
-        MarketType _marketType
+        IPolicast.MarketCategory _category,
+       IPolicast.MarketType _marketType
     ) external whenNotPaused returns (uint256) {
         uint256 defaultLiquidity = 1000 * 1e18; // 1000 tokens default
         return createMarket(_question, _description, _optionNames, _optionDescriptions, _duration, _category, _marketType, defaultLiquidity);
     }
 
     function validateMarket(uint256 _marketId) external validMarket(_marketId) {
-        if (!hasRole(MARKET_VALIDATOR_ROLE, msg.sender) && msg.sender != owner()) revert NotAuthorized();
-        if (markets[_marketId].validated) revert MarketAlreadyResolved();
+        if (!hasRole(MARKET_VALIDATOR_ROLE, msg.sender) && msg.sender != owner()) revert IPolicast.NotAuthorized();
+        if (markets[_marketId].validated) revert IPolicast.MarketAlreadyResolved();
         
         markets[_marketId].validated = true;
-        emit MarketValidated(_marketId, msg.sender);
+        emit IPolicast.MarketValidated(_marketId, msg.sender);
     }
 
     // Trading Functions
     function claimFreeTokens(
         uint256 _marketId
     ) external nonReentrant whenNotPaused validMarket(_marketId) marketActive(_marketId) {
-        Market storage market = markets[_marketId];
-        if (market.marketType != MarketType.FREE_ENTRY) revert NotFreeMarket();
-        if (!market.freeConfig.isActive) revert FreeEntryInactive();
-        if (market.freeConfig.hasClaimedFree[msg.sender]) revert AlreadyClaimedFree();
-        if (market.freeConfig.currentFreeParticipants >= market.freeConfig.maxFreeParticipants) revert FreeSlotseFull();
-        if (market.freeConfig.remainingPrizePool < market.freeConfig.tokensPerParticipant) revert InsufficientPrizePool();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.marketType != IPolicast.MarketType.FREE_ENTRY) revert IPolicast.NotFreeMarket();
+        if (!market.freeConfig.isActive) revert IPolicast.FreeEntryInactive();
+        if (market.freeConfig.hasClaimedFree[msg.sender]) revert IPolicast.AlreadyClaimedFree();
+        if (market.freeConfig.currentFreeParticipants >= market.freeConfig.maxFreeParticipants) revert IPolicast.FreeSlotseFull();
+        if (market.freeConfig.remainingPrizePool < market.freeConfig.tokensPerParticipant) revert IPolicast.InsufficientPrizePool();
 
         uint256 freeTokens = market.freeConfig.tokensPerParticipant;
         
@@ -439,12 +289,12 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         }
 
         // Transfer actual Buster tokens to user
-        if (!bettingToken.transfer(msg.sender, freeTokens)) revert TransferFailed();
+        if (!bettingToken.transfer(msg.sender, freeTokens)) revert IPolicast.TransferFailed();
         
         // Update user portfolio (tokens received count as "investment" for tracking)
         userPortfolios[msg.sender].tradeCount++;
 
-        emit FreeTokensClaimed(_marketId, msg.sender, freeTokens);
+        emit IPolicast.FreeTokensClaimed(_marketId, msg.sender, freeTokens);
     }
 
     // AMM Swap Function
@@ -455,13 +305,13 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 _amountIn,
         uint256 _minAmountOut
     ) external nonReentrant whenNotPaused validMarket(_marketId) marketActive(_marketId) returns (uint256 amountOut) {
-        if (_optionIdIn == _optionIdOut) revert CannotSwapSameOption();
-        if (_amountIn == 0) revert AmountMustBePositive();
-        if (markets[_marketId].userShares[msg.sender][_optionIdIn] < _amountIn) revert InsufficientShares();
+        if (_optionIdIn == _optionIdOut) revert IPolicast.CannotSwapSameOption();
+        if (_amountIn == 0) revert IPolicast.AmountMustBePositive();
+        if (markets[_marketId].userShares[msg.sender][_optionIdIn] < _amountIn) revert IPolicast.InsufficientShares();
 
-        Market storage market = markets[_marketId];
-        MarketOption storage optionIn = market.options[_optionIdIn];
-        MarketOption storage optionOut = market.options[_optionIdOut];
+        IPolicast.Market storage market = markets[_marketId];
+        IPolicast.MarketOption storage optionIn = market.options[_optionIdIn];
+        IPolicast.MarketOption storage optionOut = market.options[_optionIdOut];
 
         // Calculate AMM swap using constant product formula: x * y = k
         uint256 reserveIn = optionIn.reserve;
@@ -476,8 +326,8 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         
         // Calculate output amount: amountOut = (reserveOut * amountInWithFee) / (reserveIn + amountInWithFee)
         amountOut = (reserveOut * amountInWithFee) / (reserveIn + amountInWithFee);
-        if (amountOut < _minAmountOut) revert InsufficientOutput();
-        if (amountOut >= reserveOut) revert InsufficientLiquidity();
+        if (amountOut < _minAmountOut) revert IPolicast.InsufficientOutput();
+        if (amountOut >= reserveOut) revert IPolicast.InsufficientLiquidity();
 
         // Update reserves
         optionIn.reserve += _amountIn;
@@ -492,19 +342,19 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         optionOut.currentPrice = (optionOut.k * 1e18) / optionOut.reserve;
 
         // Record price history
-        priceHistory[_marketId][_optionIdIn].push(PricePoint({
+        priceHistory[_marketId][_optionIdIn].push(IPolicast.PricePoint({
             price: optionIn.currentPrice,
             timestamp: block.timestamp,
             volume: _amountIn * optionIn.currentPrice / 1e18
         }));
 
-        priceHistory[_marketId][_optionIdOut].push(PricePoint({
+        priceHistory[_marketId][_optionIdOut].push(IPolicast.PricePoint({
             price: optionOut.currentPrice,
             timestamp: block.timestamp,
             volume: amountOut * optionOut.currentPrice / 1e18
         }));
 
-        emit AMMSwap(_marketId, _optionIdIn, _optionIdOut, _amountIn, amountOut, msg.sender);
+        emit IPolicast.AMMSwap(_marketId, _optionIdIn, _optionIdOut, _amountIn, amountOut, msg.sender);
         return amountOut;
     }
 
@@ -514,20 +364,20 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 _quantity,
         uint256 _maxPricePerShare
     ) external nonReentrant whenNotPaused validMarket(_marketId) marketActive(_marketId) validOption(_marketId, _optionId) {
-        if (_quantity == 0) revert AmountMustBePositive();
-        if (!markets[_marketId].validated) revert MarketNotValidated();
+        if (_quantity == 0) revert IPolicast.AmountMustBePositive();
+        if (!markets[_marketId].validated) revert IPolicast.MarketNotValidated();
 
-        Market storage market = markets[_marketId];
-        MarketOption storage option = market.options[_optionId];
+        IPolicast.Market storage market = markets[_marketId];
+        IPolicast.MarketOption storage option = market.options[_optionId];
 
         uint256 currentPrice = calculateCurrentPrice(_marketId, _optionId);
-        if (currentPrice > _maxPricePerShare) revert PriceTooHigh();
+        if (currentPrice > _maxPricePerShare) revert IPolicast.PriceTooHigh();
 
         uint256 totalCost = currentPrice * _quantity / 1e18;
         uint256 fee = totalCost * platformFeeRate / 10000;
         uint256 netCost = totalCost + fee;
 
-        if (!bettingToken.transferFrom(msg.sender, address(this), netCost)) revert TransferFailed();
+        if (!bettingToken.transferFrom(msg.sender, address(this), netCost)) revert IPolicast.TransferFailed();
 
         // Update user shares
         if (market.userShares[msg.sender][_optionId] == 0 && _isNewParticipant(msg.sender, _marketId)) {
@@ -553,14 +403,14 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         option.currentPrice = calculateNewPrice(_marketId, _optionId, _quantity, true);
 
         // Record price history
-        priceHistory[_marketId][_optionId].push(PricePoint({
+        priceHistory[_marketId][_optionId].push(IPolicast.PricePoint({
             price: option.currentPrice,
             timestamp: block.timestamp,
             volume: totalCost
         }));
 
         // Record trade
-        Trade memory trade = Trade({
+        IPolicast.Trade memory trade = IPolicast.Trade({
             marketId: _marketId,
             optionId: _optionId,
             buyer: msg.sender,
@@ -573,8 +423,8 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         userTradeHistory[msg.sender].push(trade);
         marketTrades[_marketId].push(trade);
 
-        emit TradeExecuted(_marketId, _optionId, msg.sender, address(0), currentPrice, _quantity, tradeCount++);
-        emit FeeCollected(_marketId, fee);
+        emit IPolicast.TradeExecuted(_marketId, _optionId, msg.sender, address(0), currentPrice, _quantity, tradeCount++);
+        emit IPolicast.FeeCollected(_marketId, fee);
     }
 
     function sellShares(
@@ -583,14 +433,14 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 _quantity,
         uint256 _minPricePerShare
     ) external nonReentrant whenNotPaused validMarket(_marketId) marketActive(_marketId) validOption(_marketId, _optionId) {
-        if (_quantity == 0) revert AmountMustBePositive();
-        if (markets[_marketId].userShares[msg.sender][_optionId] < _quantity) revert InsufficientShares();
+        if (_quantity == 0) revert IPolicast.AmountMustBePositive();
+        if (markets[_marketId].userShares[msg.sender][_optionId] < _quantity) revert IPolicast.InsufficientShares();
 
-        Market storage market = markets[_marketId];
-        MarketOption storage option = market.options[_optionId];
+        IPolicast.Market storage market = markets[_marketId];
+        IPolicast.MarketOption storage option = market.options[_optionId];
 
         uint256 currentPrice = calculateCurrentPrice(_marketId, _optionId);
-        if (currentPrice < _minPricePerShare) revert PriceTooLow();
+        if (currentPrice < _minPricePerShare) revert IPolicast.PriceTooLow();
 
         uint256 totalRevenue = currentPrice * _quantity / 1e18;
         uint256 fee = totalRevenue * platformFeeRate / 10000;
@@ -614,14 +464,14 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         userPortfolios[msg.sender].tradeCount++;
 
         // Record price history
-        priceHistory[_marketId][_optionId].push(PricePoint({
+        priceHistory[_marketId][_optionId].push(IPolicast.PricePoint({
             price: option.currentPrice,
             timestamp: block.timestamp,
             volume: totalRevenue
         }));
 
         // Record trade
-        Trade memory trade = Trade({
+        IPolicast.Trade memory trade = IPolicast.Trade({
             marketId: _marketId,
             optionId: _optionId,
             buyer: address(0), // Market maker
@@ -634,44 +484,44 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         userTradeHistory[msg.sender].push(trade);
         marketTrades[_marketId].push(trade);
 
-        if (!bettingToken.transfer(msg.sender, netRevenue)) revert TransferFailed();
+        if (!bettingToken.transfer(msg.sender, netRevenue)) revert IPolicast.TransferFailed();
 
-        emit SharesSold(_marketId, _optionId, msg.sender, _quantity, currentPrice);
-        emit TradeExecuted(_marketId, _optionId, address(0), msg.sender, currentPrice, _quantity, tradeCount++);
-        emit FeeCollected(_marketId, fee);
+        emit IPolicast.SharesSold(_marketId, _optionId, msg.sender, _quantity, currentPrice);
+        emit IPolicast.TradeExecuted(_marketId, _optionId, address(0), msg.sender, currentPrice, _quantity, tradeCount++);
+        emit IPolicast.FeeCollected(_marketId, fee);
     }
 
     // Market Resolution
     function resolveMarket(uint256 _marketId, uint256 _winningOptionId) external validMarket(_marketId) {
-        if (msg.sender != owner() && !hasRole(QUESTION_RESOLVE_ROLE, msg.sender)) revert NotAuthorized();
-        Market storage market = markets[_marketId];
-        if (block.timestamp < market.endTime) revert MarketNotEndedYet();
-        if (market.resolved) revert MarketAlreadyResolved();
-        if (_winningOptionId >= market.optionCount) revert InvalidWinningOption();
+        if (msg.sender != owner() && !hasRole(QUESTION_RESOLVE_ROLE, msg.sender)) revert IPolicast.NotAuthorized();
+        IPolicast.Market storage market = markets[_marketId];
+        if (block.timestamp < market.endTime) revert IPolicast.MarketNotEndedYet();
+        if (market.resolved) revert IPolicast.MarketAlreadyResolved();
+        if (_winningOptionId >= market.optionCount) revert IPolicast.InvalidWinningOption();
 
         market.winningOptionId = _winningOptionId;
         market.resolved = true;
 
-        emit MarketResolved(_marketId, _winningOptionId, msg.sender);
+        emit IPolicast.MarketResolved(_marketId, _winningOptionId, msg.sender);
     }
 
     function disputeMarket(uint256 _marketId, string memory _reason) external validMarket(_marketId) {
-        if (!markets[_marketId].resolved) revert MarketNotResolved();
-        if (markets[_marketId].disputed) revert AlreadyClaimed();
-        if (markets[_marketId].userShares[msg.sender][markets[_marketId].winningOptionId] > 0) revert CannotDisputeIfWon();
+        if (!markets[_marketId].resolved) revert IPolicast.MarketNotResolved();
+        if (markets[_marketId].disputed) revert IPolicast.AlreadyClaimed();
+        if (markets[_marketId].userShares[msg.sender][markets[_marketId].winningOptionId] > 0) revert IPolicast.CannotDisputeIfWon();
 
         markets[_marketId].disputed = true;
-        emit MarketDisputed(_marketId, msg.sender, _reason);
+        emit IPolicast.MarketDisputed(_marketId, msg.sender, _reason);
     }
 
     // Payout Functions
     function claimWinnings(uint256 _marketId) external nonReentrant validMarket(_marketId) {
-        Market storage market = markets[_marketId];
-        if (!market.resolved || market.disputed) revert MarketNotReady();
-        if (market.hasClaimed[msg.sender]) revert AlreadyClaimed();
+        IPolicast.Market storage market = markets[_marketId];
+        if (!market.resolved || market.disputed) revert IPolicast.MarketNotReady();
+        if (market.hasClaimed[msg.sender]) revert IPolicast.AlreadyClaimed();
 
         uint256 userWinningShares = market.userShares[msg.sender][market.winningOptionId];
-        if (userWinningShares == 0) revert NoWinningShares();
+        if (userWinningShares == 0) revert IPolicast.NoWinningShares();
 
         uint256 totalWinningShares = market.options[market.winningOptionId].totalShares;
         // Only distribute user liquidity, not admin liquidity or platform fees
@@ -684,26 +534,26 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         userPortfolios[msg.sender].totalWinnings += winnings;
         totalWinnings[msg.sender] += winnings;
 
-        if (!bettingToken.transfer(msg.sender, winnings)) revert TransferFailed();
-        emit Claimed(_marketId, msg.sender, winnings);
+        if (!bettingToken.transfer(msg.sender, winnings)) revert IPolicast.TransferFailed();
+        emit IPolicast.Claimed(_marketId, msg.sender, winnings);
     }
 
     // NEW: Claim sponsored market ETH prizes
     function claimSponsoredPrize(uint256 _marketId) external nonReentrant validMarket(_marketId) {
-        Market storage market = markets[_marketId];
-        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
-        if (!market.resolved || market.disputed) revert MarketNotReady();
-        if (market.hasClaimedSponsored[msg.sender]) revert AlreadyClaimed();
-        if (market.sponsorConfig.prizeDistributed) revert SponsoredPrizeAlreadyDistributed();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.marketType != IPolicast.MarketType.SPONSORED) revert IPolicast.NotSponsoredMarket();
+        if (!market.resolved || market.disputed) revert IPolicast.MarketNotReady();
+        if (market.hasClaimedSponsored[msg.sender]) revert IPolicast.AlreadyClaimed();
+        if (market.sponsorConfig.prizeDistributed) revert IPolicast.SponsoredPrizeAlreadyDistributed();
 
         uint256 userWinningShares = market.userShares[msg.sender][market.winningOptionId];
-        if (userWinningShares == 0) revert NoWinningShares();
+        if (userWinningShares == 0) revert IPolicast.NoWinningShares();
 
         // Check if minimum participants threshold was met
-        if (market.participants.length < market.sponsorConfig.minimumParticipants) revert InsufficientParticipants();
+        if (market.participants.length < market.sponsorConfig.minimumParticipants) revert IPolicast.InsufficientParticipants();
 
         uint256 totalWinningShares = market.options[market.winningOptionId].totalShares;
-        if (totalWinningShares == 0) revert NoSponsoredPrize();
+        if (totalWinningShares == 0) revert IPolicast.NoSponsoredPrize();
 
         // Calculate user's share of the ETH prize pool
         uint256 ethPrize = (userWinningShares * market.sponsorConfig.sponsorPrize) / totalWinningShares;
@@ -712,41 +562,41 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         
         // Transfer ETH prize to winner
         (bool success, ) = payable(msg.sender).call{value: ethPrize}("");
-        if (!success) revert TransferFailed();
+        if (!success) revert IPolicast.TransferFailed();
 
-        emit SponsoredPrizeClaimed(_marketId, msg.sender, ethPrize);
+        emit IPolicast.SponsoredPrizeClaimed(_marketId, msg.sender, ethPrize);
     }
 
     // NEW: Refund sponsor if minimum participants not met
     function refundSponsor(uint256 _marketId) external nonReentrant validMarket(_marketId) {
-        Market storage market = markets[_marketId];
-        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
-        if (!market.resolved) revert MarketNotResolved();
-        if (market.sponsorConfig.prizeDistributed) revert SponsoredPrizeAlreadyDistributed();
-        if (msg.sender != market.sponsorConfig.sponsor) revert NotAuthorized();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.marketType != IPolicast.MarketType.SPONSORED) revert IPolicast.NotSponsoredMarket();
+        if (!market.resolved) revert IPolicast.MarketNotResolved();
+        if (market.sponsorConfig.prizeDistributed) revert IPolicast.SponsoredPrizeAlreadyDistributed();
+        if (msg.sender != market.sponsorConfig.sponsor) revert IPolicast.NotAuthorized();
 
         // Only refund if minimum participants not met
-        if (market.participants.length >= market.sponsorConfig.minimumParticipants) revert InsufficientParticipants();
+        if (market.participants.length >= market.sponsorConfig.minimumParticipants) revert IPolicast.InsufficientParticipants();
 
         uint256 refundAmount = market.sponsorConfig.sponsorPrize;
         market.sponsorConfig.prizeDistributed = true; // Mark as handled
         
         // Refund ETH to sponsor
         (bool success, ) = payable(market.sponsorConfig.sponsor).call{value: refundAmount}("");
-        if (!success) revert TransferFailed();
+        if (!success) revert IPolicast.TransferFailed();
 
-        emit SponsoredPrizeRefunded(_marketId, market.sponsorConfig.sponsor, refundAmount);
+        emit IPolicast.SponsoredPrizeRefunded(_marketId, market.sponsorConfig.sponsor, refundAmount);
     }
 
     // Price Calculation Functions
     function calculateCurrentPrice(uint256 _marketId, uint256 _optionId) public view returns (uint256) {
-        Market storage market = markets[_marketId];
+        IPolicast.Market storage market = markets[_marketId];
         return market.options[_optionId].currentPrice;
     }
 
     function calculateNewPrice(uint256 _marketId, uint256 _optionId, uint256 _quantity, bool _isBuy) internal view returns (uint256) {
-        Market storage market = markets[_marketId];
-        MarketOption storage option = market.options[_optionId];
+        IPolicast.Market storage market = markets[_marketId];
+        IPolicast.MarketOption storage option = market.options[_optionId];
         
         // Use AMM pricing model based on reserves
         uint256 reserve = option.reserve;
@@ -765,10 +615,10 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
     // Add AMM Liquidity
     function addAMMLiquidity(uint256 _marketId, uint256 _amount) external nonReentrant validMarket(_marketId) {
-        if (_amount == 0) revert AmountMustBePositive();
-        if (!bettingToken.transferFrom(msg.sender, address(this), _amount)) revert TransferFailed();
+        if (_amount == 0) revert IPolicast.AmountMustBePositive();
+        if (!bettingToken.transferFrom(msg.sender, address(this), _amount)) revert IPolicast.TransferFailed();
         
-        Market storage market = markets[_marketId];
+        IPolicast.Market storage market = markets[_marketId];
         market.ammLiquidityPool += _amount;
         
         // Track LP contribution
@@ -784,12 +634,12 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
             market.options[i].reserve += amountPerOption;
         }
         
-        emit LiquidityAdded(_marketId, msg.sender, _amount);
+        emit IPolicast.LiquidityAdded(_marketId, msg.sender, _amount);
     }
 
     function calculateSellPrice(uint256 _marketId, uint256 _optionId, uint256 _quantity) public view returns (uint256) {
-        Market storage market = markets[_marketId];
-        MarketOption storage option = market.options[_optionId];
+        IPolicast.Market storage market = markets[_marketId];
+        IPolicast.MarketOption storage option = market.options[_optionId];
         
         // Calculate sell price using AMM formula with 0.3% fee
         uint256 newReserve = option.reserve > _quantity ? option.reserve - _quantity : option.reserve / 2;
@@ -802,7 +652,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
     // Get current market odds for all options
     function getMarketOdds(uint256 _marketId) external view validMarket(_marketId) returns (uint256[] memory) {
-        Market storage market = markets[_marketId];
+        IPolicast.Market storage market = markets[_marketId];
         uint256[] memory odds = new uint256[](market.optionCount);
         
         uint256 totalLiquidity = 0;
@@ -820,83 +670,83 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     // Emergency functions
     function pauseMarket(uint256 _marketId) external onlyOwner validMarket(_marketId) {
         markets[_marketId].resolved = true;
-        emit MarketPaused(_marketId);
+        emit IPolicast.MarketPaused(_marketId);
     }
 
     function updateBettingTokenAddress(address _newToken) external onlyOwner {
-        if (_newToken == address(0)) revert InvalidToken();
+        if (_newToken == address(0)) revert IPolicast.InvalidToken();
         previousBettingToken = address(bettingToken);
         bettingToken = IERC20(_newToken);
         tokenUpdatedAt = block.timestamp;
         
-        emit BettingTokenUpdated(previousBettingToken, _newToken, block.timestamp);
+        emit IPolicast.BettingTokenUpdated(previousBettingToken, _newToken, block.timestamp);
     }
 
     // NEW: Platform Fee Management
     function withdrawPlatformFees() external nonReentrant {
-        if (msg.sender != feeCollector && msg.sender != owner()) revert NotAuthorized();
-        if (totalPlatformFeesCollected == 0) revert NoFeesToWithdraw();
+        if (msg.sender != feeCollector && msg.sender != owner()) revert IPolicast.NotAuthorized();
+        if (totalPlatformFeesCollected == 0) revert IPolicast.NoFeesToWithdraw();
         
         uint256 feesToWithdraw = totalPlatformFeesCollected;
         totalPlatformFeesCollected = 0;
         
-        if (!bettingToken.transfer(feeCollector, feesToWithdraw)) revert TransferFailed();
-        emit PlatformFeesWithdrawn(feeCollector, feesToWithdraw);
+        if (!bettingToken.transfer(feeCollector, feesToWithdraw)) revert IPolicast.TransferFailed();
+        emit IPolicast.PlatformFeesWithdrawn(feeCollector, feesToWithdraw);
     }
 
     // NEW: Admin Liquidity Recovery
     function withdrawAdminLiquidity(uint256 _marketId) external nonReentrant validMarket(_marketId) {
-        Market storage market = markets[_marketId];
-        if (msg.sender != market.creator) revert NotAuthorized();
-        if (!market.resolved) revert MarketNotResolved();
-        if (market.adminLiquidityClaimed) revert AdminLiquidityAlreadyClaimed();
-        if (market.adminInitialLiquidity == 0) revert AmountMustBePositive();
+        IPolicast.Market storage market = markets[_marketId];
+        if (msg.sender != market.creator) revert IPolicast.NotAuthorized();
+        if (!market.resolved) revert IPolicast.MarketNotResolved();
+        if (market.adminLiquidityClaimed) revert IPolicast.AdminLiquidityAlreadyClaimed();
+        if (market.adminInitialLiquidity == 0) revert IPolicast.AmountMustBePositive();
         
         uint256 liquidityToReturn = market.adminInitialLiquidity;
         market.adminLiquidityClaimed = true;
         
-        if (!bettingToken.transfer(market.creator, liquidityToReturn)) revert TransferFailed();
-        emit AdminLiquidityWithdrawn(_marketId, market.creator, liquidityToReturn);
+        if (!bettingToken.transfer(market.creator, liquidityToReturn)) revert IPolicast.TransferFailed();
+        emit IPolicast.AdminLiquidityWithdrawn(_marketId, market.creator, liquidityToReturn);
     }
 
     // NEW: Withdraw unused prize pool from free markets
     function withdrawUnusedPrizePool(uint256 _marketId) external nonReentrant validMarket(_marketId) {
-        Market storage market = markets[_marketId];
-        if (msg.sender != market.creator) revert NotAuthorized();
-        if (market.marketType != MarketType.FREE_ENTRY) revert NotFreeMarket();
-        if (!market.resolved) revert MarketNotResolved();
-        if (market.freeConfig.remainingPrizePool == 0) revert AmountMustBePositive();
+       IPolicast. Market storage market = markets[_marketId];
+        if (msg.sender != market.creator) revert IPolicast.NotAuthorized();
+        if (market.marketType != IPolicast.MarketType.FREE_ENTRY) revert IPolicast.NotFreeMarket();
+        if (!market.resolved) revert IPolicast.MarketNotResolved();
+        if (market.freeConfig.remainingPrizePool == 0) revert IPolicast.AmountMustBePositive();
         
         uint256 unusedTokens = market.freeConfig.remainingPrizePool;
         market.freeConfig.remainingPrizePool = 0;
         
-        if (!bettingToken.transfer(market.creator, unusedTokens)) revert TransferFailed();
-        emit AdminLiquidityWithdrawn(_marketId, market.creator, unusedTokens); // Reuse event
+        if (!bettingToken.transfer(market.creator, unusedTokens)) revert IPolicast.TransferFailed();
+        emit IPolicast.AdminLiquidityWithdrawn(_marketId, market.creator, unusedTokens); // Reuse event
     }
 
     // NEW: LP Rewards Claiming
     function claimLPRewards(uint256 _marketId) external nonReentrant validMarket(_marketId) {
-        Market storage market = markets[_marketId];
-        if (market.lpContributions[msg.sender] == 0) revert NotLiquidityProvider();
-        if (market.lpRewardsClaimed[msg.sender]) revert AlreadyClaimed();
-        if (market.ammFeesCollected == 0) revert NoLPRewards();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.lpContributions[msg.sender] == 0) revert IPolicast.NotLiquidityProvider();
+        if (market.lpRewardsClaimed[msg.sender]) revert IPolicast.AlreadyClaimed();
+        if (market.ammFeesCollected == 0) revert IPolicast.NoLPRewards();
         
         // Calculate LP's share of AMM fees based on their contribution
         uint256 totalLPContributions = market.ammLiquidityPool;
         uint256 lpShare = (market.lpContributions[msg.sender] * market.ammFeesCollected) / totalLPContributions;
         
-        if (lpShare == 0) revert NoLPRewards();
+        if (lpShare == 0) revert IPolicast.NoLPRewards();
         
         market.lpRewardsClaimed[msg.sender] = true;
         lpRewardsEarned[msg.sender] += lpShare;
         
-        if (!bettingToken.transfer(msg.sender, lpShare)) revert TransferFailed();
-        emit LPRewardsClaimed(_marketId, msg.sender, lpShare);
+        if (!bettingToken.transfer(msg.sender, lpShare)) revert IPolicast.TransferFailed();
+        emit IPolicast.LPRewardsClaimed(_marketId, msg.sender, lpShare);
     }
 
     // Helper Functions
     function _isNewParticipant(address _user, uint256 _marketId) internal view returns (bool) {
-        Market storage market = markets[_marketId];
+        IPolicast.Market storage market = markets[_marketId];
         for (uint256 i = 0; i < market.optionCount; i++) {
             if (market.userShares[_user][i] > 0) {
                 return false;
@@ -910,14 +760,14 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         string memory question,
         string memory description,
         uint256 endTime,
-        MarketCategory category,
+        IPolicast.MarketCategory category,
         uint256 optionCount,
         bool resolved,
         bool disputed,
         uint256 winningOptionId,
         address creator
     ) {
-        Market storage market = markets[_marketId];
+        IPolicast.Market storage market = markets[_marketId];
         return (
             market.question,
             market.description,
@@ -939,7 +789,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 currentPrice,
         bool isActive
     ) {
-        MarketOption storage option = markets[_marketId].options[_optionId];
+       IPolicast.MarketOption storage option = markets[_marketId].options[_optionId];
         return (
             option.name,
             option.description,
@@ -951,7 +801,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     }
 
     function getUserShares(uint256 _marketId, address _user) external view validMarket(_marketId) returns (uint256[] memory) {
-        Market storage market = markets[_marketId];
+        IPolicast.Market storage market = markets[_marketId];
         uint256[] memory shares = new uint256[](market.optionCount);
         for (uint256 i = 0; i < market.optionCount; i++) {
             shares[i] = market.userShares[_user][i];
@@ -959,16 +809,16 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         return shares;
     }
 
-    function getUserPortfolio(address _user) external view returns (UserPortfolio memory) {
+    function getUserPortfolio(address _user) external view returns (IPolicast.UserPortfolio memory) {
         return userPortfolios[_user];
     }
 
-    function getPriceHistory(uint256 _marketId, uint256 _optionId, uint256 _limit) external view returns (PricePoint[] memory) {
-        PricePoint[] storage history = priceHistory[_marketId][_optionId];
+    function getPriceHistory(uint256 _marketId, uint256 _optionId, uint256 _limit) external view returns (IPolicast.PricePoint[] memory) {
+        IPolicast.PricePoint[] storage history = priceHistory[_marketId][_optionId];
         uint256 length = history.length;
         uint256 returnLength = _limit > length ? length : _limit;
         
-        PricePoint[] memory result = new PricePoint[](returnLength);
+        IPolicast.PricePoint[] memory result = new IPolicast.PricePoint[](returnLength);
         uint256 startIndex = length > _limit ? length - _limit : 0;
         
         for (uint256 i = 0; i < returnLength; i++) {
@@ -978,7 +828,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         return result;
     }
 
-    function getMarketsByCategory(MarketCategory _category, uint256 _limit) external view returns (uint256[] memory) {
+    function getMarketsByCategory(IPolicast.MarketCategory _category, uint256 _limit) external view returns (uint256[] memory) {
         uint256[] storage categoryMarketIds = categoryMarkets[_category];
         uint256 length = categoryMarketIds.length;
         uint256 returnLength = _limit > length ? length : _limit;
@@ -1009,7 +859,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 ammFeesCollected,
         bool adminLiquidityClaimed
     ) {
-        Market storage market = markets[_marketId];
+        IPolicast.Market storage market = markets[_marketId];
         return (
             market.adminInitialLiquidity,
             market.userLiquidity,
@@ -1025,7 +875,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         bool rewardsClaimed,
         uint256 estimatedRewards
     ) {
-        Market storage market = markets[_marketId];
+        IPolicast.Market storage market = markets[_marketId];
         uint256 contribution = market.lpContributions[_lp];
         bool rewardsClaimed = market.lpRewardsClaimed[_lp];
         
@@ -1061,8 +911,8 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 remainingPrizePool,
         bool isActive
     ) {
-        Market storage market = markets[_marketId];
-        if (market.marketType != MarketType.FREE_ENTRY) revert NotFreeMarket();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.marketType != IPolicast.MarketType.FREE_ENTRY) revert IPolicast.NotFreeMarket();
         
         return (
             market.freeConfig.maxFreeParticipants,
@@ -1076,8 +926,8 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
     // NEW: Check if user claimed free tokens
     function hasUserClaimedFreeTokens(uint256 _marketId, address _user) external view validMarket(_marketId) returns (bool, uint256) {
-        Market storage market = markets[_marketId];
-        if (market.marketType != MarketType.FREE_ENTRY) revert NotFreeMarket();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.marketType != IPolicast.MarketType.FREE_ENTRY) revert IPolicast.NotFreeMarket();
         
         return (
             market.freeConfig.hasClaimedFree[_user],
@@ -1094,8 +944,8 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         bool prizeDistributed,
         string memory sponsorMessage
     ) {
-        Market storage market = markets[_marketId];
-        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.marketType != IPolicast.MarketType.SPONSORED) revert IPolicast.NotSponsoredMarket();
         
         return (
             market.sponsorConfig.sponsor,
@@ -1109,16 +959,16 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
     // NEW: Check if user claimed sponsored prize
     function hasUserClaimedSponsoredPrize(uint256 _marketId, address _user) external view validMarket(_marketId) returns (bool) {
-        Market storage market = markets[_marketId];
-        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.marketType != IPolicast.MarketType.SPONSORED) revert IPolicast.NotSponsoredMarket();
         
         return market.hasClaimedSponsored[_user];
     }
 
     // NEW: Calculate user's potential sponsored prize
     function calculateSponsoredPrize(uint256 _marketId, address _user) external view validMarket(_marketId) returns (uint256) {
-        Market storage market = markets[_marketId];
-        if (market.marketType != MarketType.SPONSORED) revert NotSponsoredMarket();
+        IPolicast.Market storage market = markets[_marketId];
+        if (market.marketType != IPolicast.MarketType.SPONSORED) revert IPolicast.NotSponsoredMarket();
         if (!market.resolved) return 0;
         
         uint256 userWinningShares = market.userShares[_user][market.winningOptionId];

@@ -50,5 +50,804 @@
 		"gasEstimates": null,
 		"methodIdentifiers": {}
 	},
-	"abi": []
+	"abi": [
+		{
+			"inputs": [],
+			"name": "AdminLiquidityAlreadyClaimed",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "AlreadyClaimed",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "AlreadyClaimedFree",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "AmountMustBePositive",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "BadDuration",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "BadOptionCount",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "CannotDisputeIfWon",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "CannotSwapSameOption",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "EmptyQuestion",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "ExceedsFreeAllowance",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "FeeTooHigh",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "FreeEntryInactive",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "FreeSlotseFull",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InsufficientBalance",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InsufficientLiquidity",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InsufficientOutput",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InsufficientParticipants",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InsufficientPrizePool",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InsufficientShares",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InvalidInput",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InvalidMarket",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InvalidOption",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InvalidToken",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "InvalidWinningOption",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "LengthMismatch",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MarketAlreadyResolved",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MarketEnded",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MarketNotActive",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MarketNotEndedYet",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MarketNotReady",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MarketNotResolved",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MarketNotValidated",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MarketResolvedAlready",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "MinTokensRequired",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "NoFeesToWithdraw",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "NoLPRewards",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "NoSponsoredPrize",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "NoWinningShares",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "NotAuthorized",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "NotFreeMarket",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "NotLiquidityProvider",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "NotSponsoredMarket",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "OnlyAdminOrOwner",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "OptionInactive",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "PriceTooHigh",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "PriceTooLow",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "SamePrizeRequired",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "SameToken",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "SponsoredPrizeAlreadyDistributed",
+			"type": "error"
+		},
+		{
+			"inputs": [],
+			"name": "TransferFailed",
+			"type": "error"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "optionIdIn",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "optionIdOut",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amountIn",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amountOut",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "trader",
+					"type": "address"
+				}
+			],
+			"name": "AMMSwap",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "creator",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "AdminLiquidityWithdrawn",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "oldToken",
+					"type": "address"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "newToken",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "timestamp",
+					"type": "uint256"
+				}
+			],
+			"name": "BettingTokenUpdated",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "user",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "Claimed",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "FeeCollected",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "oldCollector",
+					"type": "address"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "newCollector",
+					"type": "address"
+				}
+			],
+			"name": "FeeCollectorUpdated",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "user",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "tokens",
+					"type": "uint256"
+				}
+			],
+			"name": "FreeTokensClaimed",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "provider",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "LPRewardsClaimed",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "provider",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "LiquidityAdded",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "string",
+					"name": "question",
+					"type": "string"
+				},
+				{
+					"indexed": false,
+					"internalType": "string[]",
+					"name": "options",
+					"type": "string[]"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "endTime",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "enum IPolicast.MarketCategory",
+					"name": "category",
+					"type": "uint8"
+				},
+				{
+					"indexed": false,
+					"internalType": "enum IPolicast.MarketType",
+					"name": "marketType",
+					"type": "uint8"
+				},
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "creator",
+					"type": "address"
+				}
+			],
+			"name": "MarketCreated",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "disputer",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "string",
+					"name": "reason",
+					"type": "string"
+				}
+			],
+			"name": "MarketDisputed",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				}
+			],
+			"name": "MarketPaused",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "winningOptionId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "resolver",
+					"type": "address"
+				}
+			],
+			"name": "MarketResolved",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "sponsor",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "prizeAmount",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "string",
+					"name": "message",
+					"type": "string"
+				}
+			],
+			"name": "MarketSponsored",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "validator",
+					"type": "address"
+				}
+			],
+			"name": "MarketValidated",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "collector",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "PlatformFeesWithdrawn",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "optionId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "seller",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "quantity",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "price",
+					"type": "uint256"
+				}
+			],
+			"name": "SharesSold",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "winner",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "SponsoredPrizeClaimed",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "sponsor",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "SponsoredPrizeRefunded",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "marketId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "optionId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "buyer",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "seller",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "price",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "quantity",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "tradeId",
+					"type": "uint256"
+				}
+			],
+			"name": "TradeExecuted",
+			"type": "event"
+		}
+	]
 }

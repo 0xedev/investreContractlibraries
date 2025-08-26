@@ -89,11 +89,6 @@
 			},
 			{
 				"inputs": [],
-				"name": "ExceedsFreeAllowance",
-				"type": "error"
-			},
-			{
-				"inputs": [],
 				"name": "ExpectedPause",
 				"type": "error"
 			},
@@ -110,11 +105,6 @@
 			{
 				"inputs": [],
 				"name": "FreeSlotseFull",
-				"type": "error"
-			},
-			{
-				"inputs": [],
-				"name": "InsufficientBalance",
 				"type": "error"
 			},
 			{
@@ -140,11 +130,6 @@
 			{
 				"inputs": [],
 				"name": "InsufficientShares",
-				"type": "error"
-			},
-			{
-				"inputs": [],
-				"name": "InvalidInput",
 				"type": "error"
 			},
 			{
@@ -180,11 +165,6 @@
 			{
 				"inputs": [],
 				"name": "MarketEnded",
-				"type": "error"
-			},
-			{
-				"inputs": [],
-				"name": "MarketNotActive",
 				"type": "error"
 			},
 			{
@@ -584,13 +564,13 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "enum PolicastMarketV3.MarketCategory",
+						"internalType": "enum IPolicast.MarketCategory",
 						"name": "category",
 						"type": "uint8"
 					},
 					{
 						"indexed": false,
-						"internalType": "enum PolicastMarketV3.MarketType",
+						"internalType": "enum IPolicast.MarketType",
 						"name": "marketType",
 						"type": "uint8"
 					},
@@ -1293,7 +1273,7 @@
 			{
 				"inputs": [
 					{
-						"internalType": "enum PolicastMarketV3.MarketCategory",
+						"internalType": "enum IPolicast.MarketCategory",
 						"name": "",
 						"type": "uint8"
 					},
@@ -1394,7 +1374,7 @@
 						"type": "uint256"
 					},
 					{
-						"internalType": "enum PolicastMarketV3.MarketCategory",
+						"internalType": "enum IPolicast.MarketCategory",
 						"name": "_category",
 						"type": "uint8"
 					},
@@ -1453,12 +1433,12 @@
 						"type": "uint256"
 					},
 					{
-						"internalType": "enum PolicastMarketV3.MarketCategory",
+						"internalType": "enum IPolicast.MarketCategory",
 						"name": "_category",
 						"type": "uint8"
 					},
 					{
-						"internalType": "enum PolicastMarketV3.MarketType",
+						"internalType": "enum IPolicast.MarketType",
 						"name": "_marketType",
 						"type": "uint8"
 					},
@@ -1507,12 +1487,12 @@
 						"type": "uint256"
 					},
 					{
-						"internalType": "enum PolicastMarketV3.MarketCategory",
+						"internalType": "enum IPolicast.MarketCategory",
 						"name": "_category",
 						"type": "uint8"
 					},
 					{
-						"internalType": "enum PolicastMarketV3.MarketType",
+						"internalType": "enum IPolicast.MarketType",
 						"name": "_marketType",
 						"type": "uint8"
 					}
@@ -1556,7 +1536,7 @@
 						"type": "uint256"
 					},
 					{
-						"internalType": "enum PolicastMarketV3.MarketCategory",
+						"internalType": "enum IPolicast.MarketCategory",
 						"name": "_category",
 						"type": "uint8"
 					},
@@ -1787,7 +1767,7 @@
 						"type": "uint256"
 					},
 					{
-						"internalType": "enum PolicastMarketV3.MarketCategory",
+						"internalType": "enum IPolicast.MarketCategory",
 						"name": "category",
 						"type": "uint8"
 					},
@@ -1891,7 +1871,7 @@
 			{
 				"inputs": [
 					{
-						"internalType": "enum PolicastMarketV3.MarketCategory",
+						"internalType": "enum IPolicast.MarketCategory",
 						"name": "_category",
 						"type": "uint8"
 					},
@@ -1978,7 +1958,7 @@
 								"type": "uint256"
 							}
 						],
-						"internalType": "struct PolicastMarketV3.PricePoint[]",
+						"internalType": "struct IPolicast.PricePoint[]",
 						"name": "",
 						"type": "tuple[]"
 					}
@@ -2087,7 +2067,7 @@
 								"type": "uint256"
 							}
 						],
-						"internalType": "struct PolicastMarketV3.UserPortfolio",
+						"internalType": "struct IPolicast.UserPortfolio",
 						"name": "",
 						"type": "tuple"
 					}
@@ -2342,7 +2322,7 @@
 			{
 				"inputs": [
 					{
-						"internalType": "enum PolicastMarketV3.MarketType",
+						"internalType": "enum IPolicast.MarketType",
 						"name": "",
 						"type": "uint8"
 					},
@@ -3050,12 +3030,20 @@
 				"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u"
 			]
 		},
-		"src/PolicastV3.sol/v3.sol": {
-			"keccak256": "0xc44e6c24bc0b3e19ac8423cfadbddc9ebc65d7801a3e2a39c5e25854c1382495",
+		"src/PolicastV3.sol/iv3.sol": {
+			"keccak256": "0xde9b3ce74a8d0c2065e745397b9cabe22186085b11d65fc1162b73b61899e351",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://de31f3f0f22a7be2e6d3c45836a30c6b0b05cbbbd6072d8cd2443af756c23144",
-				"dweb:/ipfs/QmPCg6oUq5YkHRQP3YgHrhPYiEC95d1pWXsUASFaNJSkRV"
+				"bzz-raw://369418abbed8894466089a5e43b9e4faf31142b8ff94688d0c9b04c4ca76d350",
+				"dweb:/ipfs/QmfLsvxGTq4zuAQ6oTj1R6MtjtriTJbH5mfZQcw8kcB2gg"
+			]
+		},
+		"src/PolicastV3.sol/v3.sol": {
+			"keccak256": "0xd1bb5cffce5c091715e28ab943095715bf1c8665391dc14a6ad0dc7e3a9a21bb",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://8ed52266eda25350498ecde7061750d297fb27350453fc66a49decd32301285d",
+				"dweb:/ipfs/QmdzMhkQkoJo4DRwcT76djP1ZagKSejsg4dusVhL54hibb"
 			]
 		}
 	},

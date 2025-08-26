@@ -15,7 +15,7 @@
 						"type": "uint256"
 					},
 					{
-						"indexed": true,
+						"indexed": false,
 						"internalType": "address",
 						"name": "proposer",
 						"type": "address"
@@ -25,12 +25,6 @@
 						"internalType": "string",
 						"name": "description",
 						"type": "string"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "deadline",
-						"type": "uint256"
 					}
 				],
 				"name": "ProposalCreated",
@@ -44,12 +38,6 @@
 						"internalType": "uint256",
 						"name": "id",
 						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "bool",
-						"name": "passed",
-						"type": "bool"
 					}
 				],
 				"name": "ProposalExecuted",
@@ -65,7 +53,7 @@
 						"type": "uint256"
 					},
 					{
-						"indexed": true,
+						"indexed": false,
 						"internalType": "address",
 						"name": "voter",
 						"type": "address"
@@ -75,6 +63,12 @@
 						"internalType": "bool",
 						"name": "support",
 						"type": "bool"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "weight",
+						"type": "uint256"
 					}
 				],
 				"name": "Voted",
@@ -88,9 +82,14 @@
 						"type": "string"
 					},
 					{
-						"internalType": "uint256",
-						"name": "duration",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "target",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
 					}
 				],
 				"name": "createProposal",
@@ -108,7 +107,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "id",
+						"name": "proposalId",
 						"type": "uint256"
 					}
 				],
@@ -175,18 +174,33 @@
 						"type": "string"
 					},
 					{
+						"internalType": "address",
+						"name": "target",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					},
+					{
 						"internalType": "uint256",
-						"name": "deadline",
+						"name": "votesFor",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
-						"name": "yesVotes",
+						"name": "votesAgainst",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
-						"name": "noVotes",
+						"name": "startBlock",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "endBlock",
 						"type": "uint256"
 					},
 					{
@@ -199,10 +213,41 @@
 				"type": "function"
 			},
 			{
+				"inputs": [],
+				"name": "quorum",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "voter",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "power",
+						"type": "uint256"
+					}
+				],
+				"name": "setVotingPower",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "id",
+						"name": "proposalId",
 						"type": "uint256"
 					},
 					{
@@ -215,6 +260,38 @@
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "votingPeriod",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "votingPower",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
 			}
 		],
 		"devdoc": {
@@ -226,7 +303,7 @@
 		"userdoc": {
 			"kind": "user",
 			"methods": {},
-			"notice": "Simple governance system where token holders can propose and vote on actions.",
+			"notice": "Simple onchain governance for managing proposals, voting,         and execution of system-level changes.",
 			"version": 1
 		}
 	},
@@ -248,11 +325,11 @@
 	},
 	"sources": {
 		"src/Contract Architecture/Governance & Configuration/GovernanceModule.sol": {
-			"keccak256": "0x45e482357ca9af0fad04fe36670db4d7c32323b6efe417d5e334486d2af2f32b",
+			"keccak256": "0xde30fa3e89408d665e7f2e2484993297b9f1e51eb956a5146a61bb69535fb8a5",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://ab1c3a966bbb5a5c5f5cdc0aff42db1b4d2cd562e3af450bdd49b12f0489d3db",
-				"dweb:/ipfs/QmfGGKhYYg3EMqP6bLqwvT1C8t8yzmuRCaHRwDz7XPuKho"
+				"bzz-raw://b01b9ea5a42c779a6cb3384784e4aedb9267f78276dda232189f013f595a1ee7",
+				"dweb:/ipfs/QmTNBQTziLwLiZq6mcr7StsYGW5mEj7NyJmntz3wwVVxX2"
 			]
 		}
 	},

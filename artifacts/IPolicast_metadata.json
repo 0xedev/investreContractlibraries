@@ -1,0 +1,46 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"src/PolicastV3.sol/iv3.sol": "IPolicast"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": [],
+		"viaIR": true
+	},
+	"sources": {
+		"src/PolicastV3.sol/iv3.sol": {
+			"keccak256": "0xa7194121f3075110786aadbc8c06d981f5a327d86b3b37bb7e6b3bd400de751f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://8e0cd3f35c9bab5e83d7e29a870d45444ad6cc09fafc221f84e3f193dd931c4f",
+				"dweb:/ipfs/QmZRRhx69ggWVWosWtJhNNQd8EqngRvujkpRwSioZpQ2Ts"
+			]
+		}
+	},
+	"version": 1
+}

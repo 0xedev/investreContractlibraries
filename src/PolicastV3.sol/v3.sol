@@ -526,16 +526,15 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         Market storage market = markets[_marketId];
         MarketOption storage option = market.options[_optionId];
 
-        // Check max price before calculating cost
-        uint256 currentPrice = calculateCurrentPrice(_marketId, _optionId);
-        if (currentPrice > _maxPricePerShare) revert PriceTooHigh();
-
-        // Calculate AMM cost properly: integrate the curve from current reserve to (reserve - quantity)
+        // Use AMM cost calculation instead of flat pricing
         uint256 totalCost = calculateAMMBuyCost(_marketId, _optionId, _quantity);
-        uint256 fee = totalCost * platformFeeRate / 10000;
-        uint256 netCost = totalCost + fee;
+        uint256 avgPricePerShare = totalCost * 1e18 / _quantity;
+        if (avgPricePerShare > _maxPricePerShare) revert PriceTooHigh();
 
-        if (!bettingToken.transferFrom(msg.sender, address(this), netCost)) revert TransferFailed();
+        if (!bettingToken.transferFrom(msg.sender, address(this), totalCost)) revert TransferFailed();
+
+        // Update reserves BEFORE updating shares (critical for AMM)
+        option.reserve = option.reserve > _quantity ? option.reserve - _quantity : option.reserve / 2;
 
         // Update user shares
         if (market.userShares[msg.sender][_optionId] == 0 && _isNewParticipant(msg.sender, _marketId)) {
@@ -547,25 +546,29 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
         market.userShares[msg.sender][_optionId] += _quantity;
         option.totalShares += _quantity;
-        option.totalVolume += totalCost;
-        market.userLiquidity += totalCost; // Only user funds go to user liquidity
-        market.totalVolume += totalCost;
+        
+        // Extract fees from totalCost
+        uint256 fee = totalCost * platformFeeRate / (10000 + platformFeeRate); // Extract fee from total
+        uint256 netCostToMarket = totalCost - fee;
+        
+        option.totalVolume += netCostToMarket;
+        market.userLiquidity += netCostToMarket; // Only non-fee amount goes to user liquidity
+        market.totalVolume += netCostToMarket;
         market.platformFeesCollected += fee; // Track platform fees separately
         totalPlatformFeesCollected += fee;   // Global platform fees
 
         // Update user portfolio
-        userPortfolios[msg.sender].totalInvested += netCost;
+        userPortfolios[msg.sender].totalInvested += totalCost;
         userPortfolios[msg.sender].tradeCount++;
 
-        // Update reserve and price properly using AMM formula
-        option.reserve = option.reserve > _quantity ? option.reserve - _quantity : option.reserve / 2;
-        option.currentPrice = (option.k * 1e18) / option.reserve; // Direct AMM formula
+        // Update price based on new reserve (reserve already updated above)
+        option.currentPrice = (option.k * 1e18) / option.reserve;
 
         // Record price history
         priceHistory[_marketId][_optionId].push(PricePoint({
             price: option.currentPrice,
             timestamp: block.timestamp,
-            volume: totalCost
+            volume: netCostToMarket
         }));
 
         // Record trade
@@ -598,30 +601,33 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         Market storage market = markets[_marketId];
         MarketOption storage option = market.options[_optionId];
 
-        // Check min price before calculating revenue
-        uint256 currentPrice = calculateCurrentPrice(_marketId, _optionId);
-        if (currentPrice < _minPricePerShare) revert PriceTooLow();
+        // Use AMM revenue calculation instead of flat pricing
+        uint256 netRevenue = calculateAMMSellRevenue(_marketId, _optionId, _quantity);
+        uint256 avgPricePerShare = netRevenue * 1e18 / _quantity;
+        if (avgPricePerShare < _minPricePerShare) revert PriceTooLow();
 
-        // Calculate AMM revenue properly: integrate the curve from current reserve to (reserve + quantity)
-        uint256 totalRevenue = calculateAMMSellRevenue(_marketId, _optionId, _quantity);
-        uint256 fee = totalRevenue * platformFeeRate / 10000;
-        uint256 netRevenue = totalRevenue - fee;
+        // Update reserves BEFORE updating shares (critical for AMM)
+        option.reserve = option.reserve + _quantity;
 
         // Update shares
         market.userShares[msg.sender][_optionId] -= _quantity;
         option.totalShares -= _quantity;
-        option.totalVolume += totalRevenue;
-        market.totalVolume += totalRevenue;
+        
+        // Extract fees for tracking
+        uint256 grossRevenue = netRevenue * (10000 + platformFeeRate) / 10000;
+        uint256 fee = grossRevenue - netRevenue;
+        
+        option.totalVolume += grossRevenue;
+        market.totalVolume += grossRevenue;
         market.platformFeesCollected += fee; // Track platform fees separately
         totalPlatformFeesCollected += fee;   // Global platform fees
 
-        // Update reserve and price properly using AMM formula
-        option.reserve = option.reserve + _quantity;
-        option.currentPrice = (option.k * 1e18) / option.reserve; // Direct AMM formula
+        // Update price based on new reserve (reserve already updated above)
+        option.currentPrice = (option.k * 1e18) / option.reserve;
 
-        // Calculate P&L: (sell price - avg cost basis) * quantity
-        // For simplicity, we'll use current price as cost basis approximation
-        int256 pnl = int256(netRevenue) - int256(currentPrice * _quantity / 1e18);
+        // Calculate P&L: (sell revenue - estimated cost basis) * quantity
+        // For simplicity, we'll use current AMM pricing as cost basis approximation
+        int256 pnl = int256(netRevenue) - int256(avgPricePerShare * _quantity / 1e18);
         userPortfolios[msg.sender].realizedPnL += pnl;
         userPortfolios[msg.sender].tradeCount++;
 
@@ -629,7 +635,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         priceHistory[_marketId][_optionId].push(PricePoint({
             price: option.currentPrice,
             timestamp: block.timestamp,
-            volume: totalRevenue
+            volume: grossRevenue
         }));
 
         // Record trade
@@ -638,7 +644,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
             optionId: _optionId,
             buyer: address(0), // Market maker
             seller: msg.sender,
-            price: currentPrice,
+            price: avgPricePerShare,
             quantity: _quantity,
             timestamp: block.timestamp
         });
@@ -648,8 +654,8 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
 
         if (!bettingToken.transfer(msg.sender, netRevenue)) revert TransferFailed();
 
-        emit SharesSold(_marketId, _optionId, msg.sender, _quantity, currentPrice);
-        emit TradeExecuted(_marketId, _optionId, address(0), msg.sender, currentPrice, _quantity, tradeCount++);
+        emit SharesSold(_marketId, _optionId, msg.sender, _quantity, avgPricePerShare);
+        emit TradeExecuted(_marketId, _optionId, address(0), msg.sender, avgPricePerShare, _quantity, tradeCount++);
         emit FeeCollected(_marketId, fee);
     }
 
@@ -726,47 +732,6 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         }
     }
 
-    // Calculate proper AMM cost for buying shares (integrates the price curve)
-    function calculateAMMBuyCost(uint256 _marketId, uint256 _optionId, uint256 _quantity) internal view returns (uint256) {
-        Market storage market = markets[_marketId];
-        MarketOption storage option = market.options[_optionId];
-        
-        uint256 k = option.k;
-        uint256 currentReserve = option.reserve;
-        
-        if (_quantity >= currentReserve) {
-            // Prevent buying more than available reserve
-            revert InsufficientLiquidity();
-        }
-        
-        uint256 newReserve = currentReserve - _quantity;
-        
-        // Integrate k/x from newReserve to currentReserve
-        // ∫(k/x)dx = k * ln(x), so cost = k * ln(currentReserve/newReserve)
-        // Using approximation: ln(a/b) ≈ (a-b)/(b + (a-b)/2) for better precision
-        uint256 numerator = _quantity * k * 1e18;
-        uint256 denominator = newReserve + (_quantity / 2);
-        
-        return numerator / denominator;
-    }
-
-    // Calculate proper AMM revenue for selling shares (integrates the price curve)
-    function calculateAMMSellRevenue(uint256 _marketId, uint256 _optionId, uint256 _quantity) internal view returns (uint256) {
-        Market storage market = markets[_marketId];
-        MarketOption storage option = market.options[_optionId];
-        
-        uint256 k = option.k;
-        uint256 currentReserve = option.reserve;
-        uint256 newReserve = currentReserve + _quantity;
-        
-        // Integrate k/x from currentReserve to newReserve
-        // Using approximation for better precision
-        uint256 numerator = _quantity * k * 1e18;
-        uint256 denominator = currentReserve + (_quantity / 2);
-        
-        return numerator / denominator;
-    }
-
     // Add AMM Liquidity
     function addAMMLiquidity(uint256 _marketId, uint256 _amount) external nonReentrant validMarket(_marketId) {
         if (_amount == 0) revert AmountMustBePositive();
@@ -804,6 +769,53 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         return sellPrice * 997 / 1000;
     }
 
+    // AMM Cost Estimation Functions
+    function calculateAMMBuyCost(uint256 _marketId, uint256 _optionId, uint256 _quantity) public view returns (uint256) {
+        if (_quantity == 0) return 0;
+        
+        Market storage market = markets[_marketId];
+        MarketOption storage option = market.options[_optionId];
+        
+        // Use AMM constant product formula to calculate true cost
+        uint256 currentReserve = option.reserve;
+        uint256 k = option.k;
+        
+        // Calculate new reserve after removing shares (buying reduces reserve)
+        uint256 newReserve = currentReserve > _quantity ? currentReserve - _quantity : currentReserve / 2;
+        
+        // Calculate total cost using integral of AMM curve
+        // Cost = k * ln(currentReserve / newReserve) 
+        // Simplified approximation: k * (currentReserve - newReserve) / newReserve
+        uint256 totalCost = k * (currentReserve - newReserve) / newReserve;
+        
+        // Add platform fee
+        uint256 fee = totalCost * platformFeeRate / 10000;
+        return totalCost + fee;
+    }
+
+    function calculateAMMSellRevenue(uint256 _marketId, uint256 _optionId, uint256 _quantity) public view returns (uint256) {
+        if (_quantity == 0) return 0;
+        
+        Market storage market = markets[_marketId];
+        MarketOption storage option = market.options[_optionId];
+        
+        // Use AMM constant product formula to calculate true revenue
+        uint256 currentReserve = option.reserve;
+        uint256 k = option.k;
+        
+        // Calculate new reserve after adding shares (selling increases reserve)
+        uint256 newReserve = currentReserve + _quantity;
+        
+        // Calculate total revenue using integral of AMM curve
+        // Revenue = k * ln(newReserve / currentReserve)
+        // Simplified approximation: k * (newReserve - currentReserve) / currentReserve
+        uint256 totalRevenue = k * (newReserve - currentReserve) / currentReserve;
+        
+        // Subtract platform fee
+        uint256 fee = totalRevenue * platformFeeRate / 10000;
+        return totalRevenue > fee ? totalRevenue - fee : 0;
+    }
+
     // Get current market odds for all options
     function getMarketOdds(uint256 _marketId) external view validMarket(_marketId) returns (uint256[] memory) {
         Market storage market = markets[_marketId];
@@ -819,22 +831,6 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         }
         
         return odds;
-    }
-
-    // Get estimated cost for buying shares (including fees) - for frontend display
-    function getEstimatedBuyCost(uint256 _marketId, uint256 _optionId, uint256 _quantity) external view validMarket(_marketId) returns (uint256 totalCost, uint256 fee, uint256 netCost) {
-        totalCost = calculateAMMBuyCost(_marketId, _optionId, _quantity);
-        fee = totalCost * platformFeeRate / 10000;
-        netCost = totalCost + fee;
-        return (totalCost, fee, netCost);
-    }
-
-    // Get estimated revenue for selling shares (including fees) - for frontend display
-    function getEstimatedSellRevenue(uint256 _marketId, uint256 _optionId, uint256 _quantity) external view validMarket(_marketId) returns (uint256 totalRevenue, uint256 fee, uint256 netRevenue) {
-        totalRevenue = calculateAMMSellRevenue(_marketId, _optionId, _quantity);
-        fee = totalRevenue * platformFeeRate / 10000;
-        netRevenue = totalRevenue - fee;
-        return (totalRevenue, fee, netRevenue);
     }
 
     // Emergency functions

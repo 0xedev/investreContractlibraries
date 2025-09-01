@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.;
+pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -56,12 +56,14 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     error NotLiquidityProvider();
     error AdminLiquidityAlreadyClaimed();
     error InsufficientParticipants();
+    error MarketIsInvalidated();
+    error MarketAlreadyInvalidated();
 
     bytes32 public constant QUESTION_CREATOR_ROLE = keccak256("QUESTION_CREATOR_ROLE");
     bytes32 public constant QUESTION_RESOLVE_ROLE = keccak256("QUESTION_RESOLVE_ROLE");
     bytes32 public constant MARKET_VALIDATOR_ROLE = keccak256("MARKET_VALIDATOR_ROLE");
 
-//     // Market Categories
+    // Market Categories
     enum MarketCategory {
         POLITICS,
         SPORTS,
@@ -73,7 +75,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         OTHER
     }
 
-//     // Market Types
+    // Market Types
     enum MarketType {
         PAID,           // Regular betting token markets
         FREE_ENTRY     // Free markets with limited participation
@@ -111,6 +113,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         bool resolved;
         bool disputed;
         bool validated;
+        bool invalidated;                // NEW: Market has been invalidated by admin
         address creator;
         uint256 adminInitialLiquidity;   // NEW: Admin's initial liquidity (separate tracking)
         uint256 userLiquidity;           // NEW: User contributions only
@@ -197,6 +200,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     event AMMSwap(uint256 indexed marketId, uint256 optionIdIn, uint256 optionIdOut, uint256 amountIn, uint256 amountOut, address trader);
     event LiquidityAdded(uint256 indexed marketId, address indexed provider, uint256 amount);
     event MarketValidated(uint256 indexed marketId, address validator);
+    event MarketInvalidated(uint256 indexed marketId, address validator, uint256 refundedAmount);
     event TradeExecuted(
         uint256 indexed marketId,
         uint256 indexed optionId,
@@ -259,6 +263,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     modifier marketActive(uint256 _marketId) {
         if (block.timestamp >= markets[_marketId].endTime) revert MarketEnded();
         if (markets[_marketId].resolved) revert MarketResolvedAlready();
+        if (markets[_marketId].invalidated) revert MarketIsInvalidated();
         _;
     }
 
@@ -336,6 +341,9 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         // Initialize options with equal starting prices and AMM constants
         uint256 initialPrice = 1e18 / _optionNames.length; // Equal probability distribution
         uint256 initialK = _initialLiquidity / _optionNames.length; // AMM constant per option
+        // Calculate reserve so that price = (k * 1e18) / reserve = initialPrice
+        // If initialPrice = 0.5e18 and k = 500e18, then reserve = (500e18 * 1e18) / 0.5e18 = 1000e18
+        uint256 initialReserve = (initialK * 1e18) / initialPrice;
         
         for (uint256 i = 0; i < _optionNames.length; i++) {
             market.options[i] = MarketOption({
@@ -346,7 +354,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
                 currentPrice: initialPrice,
                 isActive: true,
                 k: initialK,
-                reserve: initialK
+                reserve: initialReserve
             });
 
             // Initialize price history
@@ -412,9 +420,30 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     function validateMarket(uint256 _marketId) external validMarket(_marketId) {
         if (!hasRole(MARKET_VALIDATOR_ROLE, msg.sender) && msg.sender != owner()) revert NotAuthorized();
         if (markets[_marketId].validated) revert MarketAlreadyResolved();
+        if (markets[_marketId].invalidated) revert MarketIsInvalidated();
         
         markets[_marketId].validated = true;
         emit MarketValidated(_marketId, msg.sender);
+    }
+
+    function invalidateMarket(uint256 _marketId) external validMarket(_marketId) {
+        if (!hasRole(MARKET_VALIDATOR_ROLE, msg.sender) && msg.sender != owner()) revert NotAuthorized();
+        if (markets[_marketId].validated) revert MarketAlreadyResolved();
+        if (markets[_marketId].invalidated) revert MarketAlreadyInvalidated();
+        
+        Market storage market = markets[_marketId];
+        market.invalidated = true;
+        
+        // Automatically refund creator's initial liquidity
+        uint256 refundAmount = 0;
+        if (!market.adminLiquidityClaimed && market.adminInitialLiquidity > 0) {
+            refundAmount = market.adminInitialLiquidity;
+            market.adminLiquidityClaimed = true;
+            
+            if (!bettingToken.transfer(market.creator, refundAmount)) revert TransferFailed();
+        }
+        
+        emit MarketInvalidated(_marketId, msg.sender, refundAmount);
     }
 
     // Trading Functions
@@ -577,7 +606,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
             optionId: _optionId,
             buyer: msg.sender,
             seller: address(0), // Market maker
-            price: currentPrice,
+            price: option.currentPrice,
             quantity: _quantity,
             timestamp: block.timestamp
         });
@@ -585,7 +614,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         userTradeHistory[msg.sender].push(trade);
         marketTrades[_marketId].push(trade);
 
-        emit TradeExecuted(_marketId, _optionId, msg.sender, address(0), currentPrice, _quantity, tradeCount++);
+        emit TradeExecuted(_marketId, _optionId, msg.sender, address(0), option.currentPrice, _quantity, tradeCount++);
         emit FeeCollected(_marketId, fee);
     }
 
@@ -713,7 +742,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         return market.options[_optionId].currentPrice;
     }
 
-    function calculateNewPrice(uint256 _marketId, uint256 _optionId, uint256 _quantity, bool _isBuy) internal view returns (uint256) {
+    function calculateNewPrice(uint256 _marketId, uint256 _optionId, uint256 _quantity, bool _isBuy) public view returns (uint256) {
         Market storage market = markets[_marketId];
         MarketOption storage option = market.options[_optionId];
         
@@ -722,11 +751,15 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 k = option.k;
         
         if (_isBuy) {
-            // FIXED: When buying, reserve decreases (liquidity consumed) → price increases
+            // When buying shares, more tokens flow into the pool → reserve increases → price decreases for that option
+            // BUT: we want price to increase when demand increases, so we need to model this differently
+            // In a prediction market: buying an option should increase its price (probability)
+            // The reserve model should reflect token scarcity, not token abundance
             uint256 newReserve = reserve > _quantity ? reserve - _quantity : reserve / 2;
             return (k * 1e18) / newReserve;
         } else {
-            // When selling, reserve increases (liquidity added) → price decreases
+            // When selling shares, tokens flow out of the pool → reserve decreases → price increases
+            // But selling should decrease the price, so we add to reserve instead
             uint256 newReserve = reserve + _quantity;
             return (k * 1e18) / newReserve;
         }
@@ -783,10 +816,12 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         // Calculate new reserve after removing shares (buying reduces reserve)
         uint256 newReserve = currentReserve > _quantity ? currentReserve - _quantity : currentReserve / 2;
         
-        // Calculate total cost using integral of AMM curve
-        // Cost = k * ln(currentReserve / newReserve) 
-        // Simplified approximation: k * (currentReserve - newReserve) / newReserve
-        uint256 totalCost = k * (currentReserve - newReserve) / newReserve;
+        // Calculate total cost using price difference
+        // Cost = quantity * average_price = quantity * (current_price + new_price) / 2
+        uint256 currentPrice = (k * 1e18) / currentReserve;
+        uint256 newPrice = (k * 1e18) / newReserve;
+        uint256 avgPrice = (currentPrice + newPrice) / 2;
+        uint256 totalCost = (_quantity * avgPrice) / 1e18;
         
         // Add platform fee
         uint256 fee = totalCost * platformFeeRate / 10000;
@@ -806,10 +841,12 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         // Calculate new reserve after adding shares (selling increases reserve)
         uint256 newReserve = currentReserve + _quantity;
         
-        // Calculate total revenue using integral of AMM curve
-        // Revenue = k * ln(newReserve / currentReserve)
-        // Simplified approximation: k * (newReserve - currentReserve) / currentReserve
-        uint256 totalRevenue = k * (newReserve - currentReserve) / currentReserve;
+        // Calculate total revenue using price difference
+        // Revenue = quantity * average_price = quantity * (current_price + new_price) / 2
+        uint256 currentPrice = (k * 1e18) / currentReserve;
+        uint256 newPrice = (k * 1e18) / newReserve;
+        uint256 avgPrice = (currentPrice + newPrice) / 2;
+        uint256 totalRevenue = (_quantity * avgPrice) / 1e18;
         
         // Subtract platform fee
         uint256 fee = totalRevenue * platformFeeRate / 10000;
@@ -864,7 +901,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
     function withdrawAdminLiquidity(uint256 _marketId) external nonReentrant validMarket(_marketId) {
         Market storage market = markets[_marketId];
         if (msg.sender != market.creator) revert NotAuthorized();
-        if (!market.resolved) revert MarketNotResolved();
+        if (!market.resolved && !market.invalidated) revert MarketNotResolved();
         if (market.adminLiquidityClaimed) revert AdminLiquidityAlreadyClaimed();
         if (market.adminInitialLiquidity == 0) revert AmountMustBePositive();
         
@@ -930,6 +967,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 optionCount,
         bool resolved,
         bool disputed,
+        bool invalidated,
         uint256 winningOptionId,
         address creator
     ) {
@@ -942,6 +980,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
             market.optionCount,
             market.resolved,
             market.disputed,
+            market.invalidated,
             market.winningOptionId,
             market.creator
         );

@@ -391,15 +391,68 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         // Transfer both liquidity and prize pool from creator
         if (!bettingToken.transferFrom(msg.sender, address(this), totalRequired)) revert TransferFailed();
         
-        uint256 marketId = createMarket(_question, _description, _optionNames, _optionDescriptions, _duration, _category, MarketType.FREE_ENTRY, _initialLiquidity);
-        
+        // Create market WITHOUT calling the internal createMarket to avoid double transfer
+        if (msg.sender != owner() && !hasRole(QUESTION_CREATOR_ROLE, msg.sender)) revert NotAuthorized();
+        if (_duration < MIN_MARKET_DURATION || _duration > MAX_MARKET_DURATION) revert BadDuration();
+        if (bytes(_question).length == 0) revert EmptyQuestion();
+        if (_optionNames.length < 2 || _optionNames.length > MAX_OPTIONS) revert BadOptionCount();
+        if (_optionNames.length != _optionDescriptions.length) revert LengthMismatch();
+        if (_initialLiquidity < 100 * 1e18) revert MinTokensRequired();
+
+        uint256 marketId = marketCount++;
         Market storage market = markets[marketId];
+        market.question = _question;
+        market.description = _description;
+        market.endTime = block.timestamp + _duration;
+        market.category = _category;
+        market.marketType = MarketType.FREE_ENTRY;
+        market.creator = msg.sender;
+        market.createdAt = block.timestamp;
+        market.optionCount = _optionNames.length;
+
+        // Track admin's initial liquidity separately
+        market.adminInitialLiquidity = _initialLiquidity;
+        market.userLiquidity = 0; // No user liquidity yet
+
+        // Initialize AMM liquidity pool with provided liquidity
+        market.ammLiquidityPool = _initialLiquidity;
+
+        // Initialize options with equal starting prices and AMM constants
+        uint256 initialPrice = 1e18 / _optionNames.length; // Equal probability distribution
+        uint256 initialK = _initialLiquidity / _optionNames.length; // AMM constant per option
+        uint256 initialReserve = (initialK * 1e18) / initialPrice;
+        
+        for (uint256 i = 0; i < _optionNames.length; i++) {
+            market.options[i] = MarketOption({
+                name: _optionNames[i],
+                description: _optionDescriptions[i],
+                totalShares: 0,
+                totalVolume: 0,
+                currentPrice: initialPrice,
+                isActive: true,
+                k: initialK,
+                reserve: initialReserve
+            });
+
+            // Initialize price history
+            priceHistory[marketId][i].push(PricePoint({
+                price: initialPrice,
+                timestamp: block.timestamp,
+                volume: 0
+            }));
+        }
+
+        categoryMarkets[_category].push(marketId);
+        marketsByType[MarketType.FREE_ENTRY].push(marketId);
+        
+        // Configure free market settings
         market.freeConfig.maxFreeParticipants = _maxFreeParticipants;
         market.freeConfig.tokensPerParticipant = _tokensPerParticipant;
         market.freeConfig.totalPrizePool = totalPrizePool;
         market.freeConfig.remainingPrizePool = totalPrizePool;
         market.freeConfig.isActive = true;
         
+        emit MarketCreated(marketId, _question, _optionNames, market.endTime, _category, MarketType.FREE_ENTRY, msg.sender);
         return marketId;
     }
 
@@ -967,6 +1020,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
         uint256 optionCount,
         bool resolved,
         bool disputed,
+        MarketType marketType,
         bool invalidated,
         uint256 winningOptionId,
         address creator
@@ -980,6 +1034,7 @@ contract PolicastMarketV3 is Ownable, ReentrancyGuard, AccessControl, Pausable {
             market.optionCount,
             market.resolved,
             market.disputed,
+            market.marketType,
             market.invalidated,
             market.winningOptionId,
             market.creator
